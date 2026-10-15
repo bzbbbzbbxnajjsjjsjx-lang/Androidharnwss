@@ -1,6 +1,21 @@
 package com.vardiya.app.ui
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.LoadingIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.material.icons.Icons
@@ -45,6 +60,35 @@ private enum class Destination(val label: String, val selectedIcon: ImageVector,
 
 @Composable
 fun VardiyaApp(viewModel: VardiyaViewModel = viewModel()) {
+    val ready by viewModel.ready.collectAsStateWithLifecycle()
+    AnimatedContent(
+        targetState = ready,
+        transitionSpec = { fadeIn() togetherWith fadeOut() },
+        label = "opening",
+    ) { isReady ->
+        if (isReady) MainContent(viewModel) else OpeningScreen()
+    }
+}
+
+/** Opening screen: the M3 Expressive loading indicator morphs through its shapes. */
+@Composable
+private fun OpeningScreen() {
+    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
+        Box(contentAlignment = Alignment.Center) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(24.dp),
+            ) {
+                LoadingIndicator(modifier = Modifier.size(96.dp))
+                Text("Vardiya", style = MaterialTheme.typography.headlineMedium)
+            }
+        }
+    }
+}
+
+@Composable
+private fun MainContent(viewModel: VardiyaViewModel) {
+    val activeShiftStart by viewModel.activeShiftStart.collectAsStateWithLifecycle()
     val summary by viewModel.summary.collectAsStateWithLifecycle()
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     var destination by rememberSaveable { mutableStateOf(Destination.SUMMARY) }
@@ -83,6 +127,9 @@ fun VardiyaApp(viewModel: VardiyaViewModel = viewModel()) {
         when (destination) {
             Destination.SUMMARY -> SummaryScreen(
                 summary = summary,
+                activeShiftStart = activeShiftStart,
+                onStartShift = viewModel::startShift,
+                onFinishShift = viewModel::finishShift,
                 onPreviousMonth = viewModel::previousMonth,
                 onNextMonth = viewModel::nextMonth,
                 onToday = viewModel::currentMonth,

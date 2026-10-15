@@ -38,6 +38,7 @@ fun SettingsScreen(
     var hours by rememberSaveable(settings) { mutableStateOf(settings.monthlyHours.formatHours()) }
     var overtime by rememberSaveable(settings) { mutableStateOf(settings.overtimeMultiplier.formatHours()) }
     var holiday by rememberSaveable(settings) { mutableStateOf(settings.holidayMultiplier.formatHours()) }
+    var shiftHours by rememberSaveable(settings) { mutableStateOf(settings.shiftHours.formatHours()) }
 
     val context = LocalContext.current
     val parsed = PaySettings(
@@ -45,6 +46,7 @@ fun SettingsScreen(
         monthlyHours = hours.toDecimal()?.takeIf { it > 0 } ?: settings.monthlyHours,
         overtimeMultiplier = overtime.toDecimal() ?: settings.overtimeMultiplier,
         holidayMultiplier = holiday.toDecimal() ?: settings.holidayMultiplier,
+        shiftHours = shiftHours.toDecimal()?.takeIf { it > 0 } ?: settings.shiftHours,
     )
 
     Column(
@@ -65,6 +67,7 @@ fun SettingsScreen(
         NumberField("Aylık çalışma saati", hours) { hours = it }
         NumberField("Fazla mesai çarpanı", overtime) { overtime = it }
         NumberField("Bayram / tatil çarpanı", holiday) { holiday = it }
+        NumberField("Vardiya süresi (saat)", shiftHours) { shiftHours = it }
 
         Card(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),

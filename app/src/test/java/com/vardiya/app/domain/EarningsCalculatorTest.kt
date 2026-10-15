@@ -5,6 +5,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.YearMonth
 
 class EarningsCalculatorTest {
@@ -75,6 +76,26 @@ class EarningsCalculatorTest {
         assertEquals(15 * 60, summary.overtimeMinutes)
         assertEquals(28_000.0 + 15 * rate * 1.5, summary.totalPay, 0.01)
         assertTrue(summary.salaryProgress > 1f)
+    }
+
+    @Test
+    fun clockShiftKeepsStartAndLength() {
+        val s = shiftFromClock(LocalDateTime.of(2026, 10, 14, 22, 15), LocalDateTime.of(2026, 10, 15, 6, 40))!!
+        assertEquals("2026-10-14", s.date)
+        assertEquals(22 * 60 + 15, s.startMinute)
+        assertEquals(8 * 60 + 25, s.workedMinutes)
+    }
+
+    @Test
+    fun clockShiftUnderOneMinuteIsDropped() {
+        val t = LocalDateTime.of(2026, 10, 14, 8, 0)
+        assertNull(shiftFromClock(t, t.plusSeconds(30)))
+    }
+
+    @Test
+    fun clockShiftIsCappedAtOneDay() {
+        val t = LocalDateTime.of(2026, 10, 14, 8, 0)
+        assertEquals(24 * 60, shiftFromClock(t, t.plusHours(30))!!.workedMinutes)
     }
 
     @Test

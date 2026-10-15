@@ -2,6 +2,7 @@ package com.vardiya.app.data
 
 import android.content.Context
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.vardiya.app.domain.PaySettings
@@ -28,6 +29,15 @@ class ShiftRepository(private val context: Context) {
             ?: PaySettings()
     }
 
+    /** Epoch millis when the running shift was started, or null when no shift is running. */
+    val activeShiftStart: Flow<Long?> = context.dataStore.data.map { it[ACTIVE_START] }
+
+    suspend fun setActiveShiftStart(epochMillis: Long?) {
+        context.dataStore.edit { prefs ->
+            if (epochMillis == null) prefs.remove(ACTIVE_START) else prefs[ACTIVE_START] = epochMillis
+        }
+    }
+
     suspend fun upsertShift(shift: Shift) = editShifts { list ->
         val index = list.indexOfFirst { it.id == shift.id }
         if (index >= 0) list.toMutableList().apply { set(index, shift) } else list + shift
@@ -49,5 +59,6 @@ class ShiftRepository(private val context: Context) {
     private companion object {
         val SHIFTS = stringPreferencesKey("shifts")
         val SETTINGS = stringPreferencesKey("settings")
+        val ACTIVE_START = longPreferencesKey("active_shift_start")
     }
 }

@@ -43,6 +43,8 @@ data class PaySettings(
     val overtimeMultiplier: Double = 1.5,
     /** Bayram/genel tatil çalışması: normal wage + one extra day's wage (İş K. md. 47). */
     val holidayMultiplier: Double = 2.0,
+    /** Planned length of a shift; the live shift progress bar fills up over this many hours. */
+    val shiftHours: Double = 8.0,
 ) {
     val hourlyRate: Double get() = if (monthlyHours > 0) monthlySalary / monthlyHours else 0.0
 }
@@ -53,4 +55,17 @@ enum class ShiftTemplate(val label: String, val startMinute: Int, val endMinute:
     EVENING("Akşam", 16 * 60, 0),
     NIGHT("Gece", 0, 8 * 60),
     LONG_DAY("12 saat", 8 * 60, 20 * 60),
+}
+
+/** Builds the shift recorded by the start/finish button, capped at 24 hours. */
+fun shiftFromClock(start: LocalDateTime, end: LocalDateTime): Shift? {
+    val span = java.time.Duration.between(start, end).toMinutes().coerceAtMost(Shift.MINUTES_PER_DAY.toLong()).toInt()
+    if (span < 1) return null
+    val startMinute = start.hour * 60 + start.minute
+    return Shift(
+        id = 0L,
+        date = start.toLocalDate().toString(),
+        startMinute = startMinute,
+        endMinute = (startMinute + span) % Shift.MINUTES_PER_DAY,
+    )
 }

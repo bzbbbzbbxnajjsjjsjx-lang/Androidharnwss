@@ -8,13 +8,19 @@ import com.vardiya.app.domain.EarningsCalculator
 import com.vardiya.app.domain.MonthSummary
 import com.vardiya.app.domain.PaySettings
 import com.vardiya.app.domain.Shift
+import com.vardiya.app.domain.shiftFromClock
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.LocalDateTime
 import java.time.YearMonth
+import java.time.ZoneId
 
 class VardiyaViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -35,6 +41,39 @@ class VardiyaViewModel(application: Application) : AndroidViewModel(application)
             EarningsCalculator.summarize(YearMonth.now(), emptyList(), PaySettings()),
         )
 
+    /** Start time of the running shift (epoch millis), null when none is running. */
+    val activeShiftStart: StateFlow<Long?> =
+        repository.activeShiftStart.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    /** False until stored data is loaded and the opening shape animation has played. */
+    private val _ready = MutableStateFlow(false)
+    val ready: StateFlow<Boolean> = _ready
+
+    init {
+        viewModelScope.launch {
+            repository.shifts.first()
+            delay(OPENING_ANIMATION_MS)
+            _ready.value = true
+        }
+    }
+
+    fun startShift() {
+        viewModelScope.launch { repository.setActiveShiftStart(System.currentTimeMillis()) }
+    }
+
+    fun finishShift() {
+        val startMillis = activeShiftStart.value ?: return
+        val zone = ZoneId.systemDefault()
+        val start = LocalDateTime.ofInstant(Instant.ofEpochMilli(startMillis), zone)
+        val shift = shiftFromClock(start, LocalDateTime.now(zone))
+        viewModelScope.launch {
+            if (shift != null) repository.upsertShift(shift.copy(id = System.currentTimeMillis()))
+            repository.setActiveShiftStart(null)
+            // Show the month the shift was recorded in.
+            _month.value = YearMonth.from(start)
+        }
+    }
+
     fun previousMonth() { _month.value = _month.value.minusMonths(1) }
     fun nextMonth() { _month.value = _month.value.plusMonths(1) }
     fun currentMonth() { _month.value = YearMonth.now() }
@@ -50,5 +89,9 @@ class VardiyaViewModel(application: Application) : AndroidViewModel(application)
 
     fun saveSettings(settings: PaySettings) {
         viewModelScope.launch { repository.saveSettings(settings) }
+    }
+
+    private companion object {
+        const val OPENING_ANIMATION_MS = 1_200L
     }
 }

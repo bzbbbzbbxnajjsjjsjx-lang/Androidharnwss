@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Calendar page with a clock hand, drawn inside the 66dp adaptive-icon safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M36,34h36a6,6 0,0 1,6 6v30a6,6 0,0 1,-6 6h-36a6,6 0,0 1,-6 -6v-30a6,6 0,0 1,6 -6z" />
+    <path
+        android:fillColor="#FF9CF1F4"
+        android:pathData="M36,34h36a6,6 0,0 1,6 6v4h-48v-4a6,6 0,0 1,6 -6z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M41,28h4v10h-4zM63,28h4v10h-4z" />
+    <path
+        android:strokeColor="#FF00696D"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M54,49a10,10 0,1 1,0 20a10,10 0,1 1,0 -20zM54,53v6h5" />
+</vector>

@@ -1,8 +1,10 @@
 package com.vardiya.app.ui.screens
 
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -29,12 +31,17 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vardiya.app.domain.EarningsCalculator
@@ -62,6 +69,7 @@ fun SummaryScreen(
 ) {
     val settings = summary.settings
     val running = activeShiftStart != null
+    val haptic = LocalHapticFeedback.current
 
     val now by produceState(System.currentTimeMillis(), activeShiftStart) {
         while (activeShiftStart != null) {
@@ -93,6 +101,16 @@ fun SummaryScreen(
             }
         }
     }
+    // The wave grows in when a shift starts and flattens when it ends.
+    val waveAmplitude by animateFloatAsState(if (running) 1f else 0f, tween(durationMillis = 500), label = "waveAmplitude")
+
+    // A light tick every full minute (one lap of the ring).
+    val minutesElapsed = (elapsedSeconds / 60).toInt()
+    var lastMinute by remember { mutableIntStateOf(minutesElapsed) }
+    LaunchedEffect(minutesElapsed, running) {
+        if (running && minutesElapsed > lastMinute) haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+        lastMinute = minutesElapsed
+    }
     val shiftPercent = elapsedSeconds / (settings.shiftHours * 3600).coerceAtLeast(1.0) * 100
 
     Column(
@@ -112,6 +130,7 @@ fun SummaryScreen(
             Box(contentAlignment = Alignment.Center) {
                 WavyRing(
                     progress = { minuteProgress },
+                    amplitude = { waveAmplitude },
                     color = MaterialTheme.colorScheme.primary,
                     trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                     modifier = Modifier.size(300.dp),
@@ -152,7 +171,10 @@ fun SummaryScreen(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             ExpressiveButton(
-                onClick = onStartShift,
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+                    onStartShift()
+                },
                 enabled = !running,
                 modifier = Modifier
                     .weight(1f)
@@ -163,7 +185,10 @@ fun SummaryScreen(
                 Text("Başlat", style = MaterialTheme.typography.titleMedium)
             }
             ExpressiveButton(
-                onClick = onFinishShift,
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onFinishShift()
+                },
                 enabled = running,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.tertiary,

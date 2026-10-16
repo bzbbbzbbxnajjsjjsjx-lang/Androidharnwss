@@ -15,6 +15,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
@@ -89,6 +91,7 @@ private fun OpeningScreen() {
 @Composable
 private fun MainContent(viewModel: VardiyaViewModel) {
     val activeShiftStart by viewModel.activeShiftStart.collectAsStateWithLifecycle()
+    val haptic = LocalHapticFeedback.current
     val summary by viewModel.summary.collectAsStateWithLifecycle()
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     var destination by rememberSaveable { mutableStateOf(Destination.SUMMARY) }
@@ -102,7 +105,10 @@ private fun MainContent(viewModel: VardiyaViewModel) {
                     val selected = destination == item
                     NavigationBarItem(
                         selected = selected,
-                        onClick = { destination = item },
+                        onClick = {
+                            if (!selected) haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
+                            destination = item
+                        },
                         icon = { Icon(if (selected) item.selectedIcon else item.icon, contentDescription = null) },
                         label = { Text(item.label) },
                         alwaysShowLabel = true,

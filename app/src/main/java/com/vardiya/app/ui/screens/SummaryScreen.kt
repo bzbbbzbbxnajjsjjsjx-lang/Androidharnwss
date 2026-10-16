@@ -42,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vardiya.app.domain.EarningsCalculator
@@ -62,6 +63,7 @@ import java.time.ZoneId
 @Composable
 fun SummaryScreen(
     summary: MonthSummary,
+    partialPay: Double,
     activeShiftStart: Long?,
     onStartShift: () -> Unit,
     onFinishShift: () -> Unit,
@@ -135,7 +137,11 @@ fun SummaryScreen(
                     trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                     modifier = Modifier.size(270.dp),
                 )
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                // One TalkBack stop that reads status, timer and earnings together.
+                Column(
+                    modifier = Modifier.semantics(mergeDescendants = true) {},
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
                     Text(
                         if (running) "Vardiya sürüyor · %${"%.1f".format(TurkishLocale, shiftPercent)}" else "Vardiya başlamadı",
                         style = MaterialTheme.typography.titleMedium,
@@ -154,16 +160,21 @@ fun SummaryScreen(
                 }
             }
             Spacer(Modifier.height(32.dp))
-            Text(
-                "${formatMonth(summary.month)} kazancın",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                formatMoney(summary.totalPay),
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-            )
+            Column(
+                modifier = Modifier.semantics(mergeDescendants = true) {},
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    "${formatMonth(summary.month)} kazancın",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    formatMoney(summary.totalPay + partialPay),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
         }
 
         Row(

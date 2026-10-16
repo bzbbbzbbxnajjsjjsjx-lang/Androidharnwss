@@ -38,6 +38,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -128,7 +131,11 @@ fun CalendarScreen(
         Legend()
 
         if (holidays.isNotEmpty()) {
-            Text("Bu ayın resmi tatilleri", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "Bu ayın resmi tatilleri",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.semantics { heading() },
+            )
             holidays.values.forEach { holiday ->
                 OutlinedCard(Modifier.fillMaxWidth()) {
                     ListItem(
@@ -175,6 +182,13 @@ private fun DayCell(
         holiday != null -> colors.onTertiaryContainer
         else -> colors.onSurface
     }
+    // TalkBack reads the whole day instead of just the number.
+    val description = buildString {
+        append(date.format(DayMonthFormatter))
+        if (holiday != null) append(", ${holiday.name}" + if (holiday.halfDay) " (yarım gün)" else "")
+        if (pay != null) append(", vardiya kazancı ${formatMoney(pay)}")
+        if (isToday) append(", bugün")
+    }
     Surface(
         onClick = onClick,
         shape = MaterialTheme.shapes.medium,
@@ -183,7 +197,8 @@ private fun DayCell(
         border = if (isToday) BorderStroke(2.dp, colors.primary) else null,
         modifier = Modifier
             .fillMaxWidth()
-            .height(64.dp),
+            .height(64.dp)
+            .semantics(mergeDescendants = true) { contentDescription = description },
     ) {
         Column(
             modifier = Modifier.padding(4.dp),
@@ -263,7 +278,11 @@ private fun DaySheet(
                 .padding(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(date.format(DayMonthFormatter), style = MaterialTheme.typography.headlineSmall)
+            Text(
+                date.format(DayMonthFormatter),
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.semantics { heading() },
+            )
             if (holiday != null) {
                 Surface(
                     color = MaterialTheme.colorScheme.tertiaryContainer,

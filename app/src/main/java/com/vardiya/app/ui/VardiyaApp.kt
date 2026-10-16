@@ -8,6 +8,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.LoadingIndicator
@@ -45,6 +46,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.vardiya.app.domain.MonthSummary
 import com.vardiya.app.ui.screens.CalendarScreen
 import com.vardiya.app.ui.screens.EditorRequest
 import com.vardiya.app.ui.screens.SettingsScreen
@@ -86,6 +88,25 @@ private fun OpeningScreen() {
             }
         }
     }
+}
+
+/** Collects the per-second pay only while the summary tab is shown. */
+@Composable
+private fun SummaryRoute(
+    viewModel: VardiyaViewModel,
+    summary: MonthSummary,
+    activeShiftStart: Long?,
+    contentPadding: PaddingValues,
+) {
+    val partialPay by viewModel.partialPay.collectAsStateWithLifecycle()
+    SummaryScreen(
+        summary = summary,
+        partialPay = partialPay,
+        activeShiftStart = activeShiftStart,
+        onStartShift = viewModel::startShift,
+        onFinishShift = viewModel::finishShift,
+        contentPadding = contentPadding,
+    )
 }
 
 @Composable
@@ -131,11 +152,10 @@ private fun MainContent(viewModel: VardiyaViewModel) {
         },
     ) { padding ->
         when (destination) {
-            Destination.SUMMARY -> SummaryScreen(
+            Destination.SUMMARY -> SummaryRoute(
+                viewModel = viewModel,
                 summary = summary,
                 activeShiftStart = activeShiftStart,
-                onStartShift = viewModel::startShift,
-                onFinishShift = viewModel::finishShift,
                 contentPadding = padding,
             )
             Destination.CALENDAR -> CalendarScreen(

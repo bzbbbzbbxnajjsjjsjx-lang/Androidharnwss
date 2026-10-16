@@ -1,11 +1,8 @@
 package com.vardiya.app.ui.screens
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -28,24 +25,22 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vardiya.app.domain.EarningsCalculator
 import com.vardiya.app.domain.MonthSummary
+import com.vardiya.app.ui.components.TurkishLocale
+import com.vardiya.app.ui.components.WavyRing
 import com.vardiya.app.ui.components.formatMoney
 import com.vardiya.app.ui.components.formatMonth
 import kotlinx.coroutines.delay
@@ -54,8 +49,8 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 
 /**
- * One big wavy circle: it fills while a shift runs (elapsed time / planned shift length),
- * with the timer and this shift's earnings inside. Start and finish buttons sit at the bottom.
+ * One big wavy ring that flows and fills one lap per minute while a shift runs, with the timer,
+ * shift progress and this shift's earnings inside. Start and finish buttons sit at the bottom.
  */
 @Composable
 fun SummaryScreen(
@@ -86,14 +81,19 @@ fun SummaryScreen(
         0.0
     }
 
-    val target = (elapsedSeconds / (settings.shiftHours * 3600).coerceAtLeast(1.0)).toFloat().coerceIn(0f, 1f)
-    val progress = remember { Animatable(0f) }
-    LaunchedEffect(target) {
-        // Linear one-second steps keep the ring moving smoothly; also plays from 0 when the app opens.
-        progress.animateTo(target, tween(durationMillis = if (target == 0f) 600 else 1_000, easing = LinearEasing))
+    // The ring completes one lap per minute so the movement is clearly visible.
+    val minuteProgress by produceState(0f, activeShiftStart) {
+        if (activeShiftStart == null) {
+            value = 0f
+        } else {
+            while (true) {
+                withFrameMillis {
+                    value = ((System.currentTimeMillis() - activeShiftStart).coerceAtLeast(0) % 60_000L) / 60_000f
+                }
+            }
+        }
     }
-
-    val ringStroke = with(LocalDensity.current) { Stroke(width = 16.dp.toPx(), cap = StrokeCap.Round) }
+    val shiftPercent = elapsedSeconds / (settings.shiftHours * 3600).coerceAtLeast(1.0) * 100
 
     Column(
         modifier = Modifier
@@ -110,18 +110,15 @@ fun SummaryScreen(
             verticalArrangement = Arrangement.Center,
         ) {
             Box(contentAlignment = Alignment.Center) {
-                CircularWavyProgressIndicator(
-                    progress = { progress.value },
-                    modifier = Modifier.size(300.dp),
+                WavyRing(
+                    progress = { minuteProgress },
                     color = MaterialTheme.colorScheme.primary,
                     trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                    stroke = ringStroke,
-                    trackStroke = ringStroke,
-                    amplitude = { 1f },
+                    modifier = Modifier.size(300.dp),
                 )
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        if (running) "Vardiya sürüyor" else "Vardiya başlamadı",
+                        if (running) "Vardiya sürüyor · %${"%.1f".format(TurkishLocale, shiftPercent)}" else "Vardiya başlamadı",
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

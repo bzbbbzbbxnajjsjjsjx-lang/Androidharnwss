@@ -4,7 +4,10 @@ Material 3 vardiya ve kazanç takip uygulaması.
 
 **Kurulum:** Aşağıdaki `Vardiya-*.apk` dosyasını telefona indir ve aç (bilinmeyen kaynaklardan yüklemeye izin vermen gerekebilir). Android 8.0 ve üzeri.
 
-### Yenilikler (1.3)
+### Yenilikler (1.4)
+- **Dalgalı halka yeniden yazıldı:** Material'ın alfa bileşeni yerine kendi çizdiğimiz dalgalı halka; dalga sürekli akar ve halka her dakika bir tur dolar, ilerleme gözle görülür. Vardiyanın yüzdesi halkanın içinde yazar.
+
+### 1.3
 - **Sadeleşen Özet ekranı:** Tek büyük dalgalı yuvarlak ilerleme. Vardiya başlayınca vardiya süresine (8 saat) doğru dolar; ortasında sayaç ve o vardiyanın canlı kazancı, altında ayın toplam kazancı. En altta **Başlat** ve **Bitir** tuşları.
 
 ### 1.2

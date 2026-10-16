@@ -133,7 +133,7 @@ fun SummaryScreen(
                     amplitude = { waveAmplitude },
                     color = MaterialTheme.colorScheme.primary,
                     trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                    modifier = Modifier.size(300.dp),
+                    modifier = Modifier.size(270.dp),
                 )
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(

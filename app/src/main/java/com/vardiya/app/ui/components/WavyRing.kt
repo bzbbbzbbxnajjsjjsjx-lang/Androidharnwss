@@ -40,15 +40,15 @@ fun WavyRing(
     trackColor: Color,
     modifier: Modifier = Modifier,
     amplitude: () -> Float = { 1f },
-    strokeWidth: Dp = 16.dp,
-    maxAmplitude: Dp = 6.dp,
-    gap: Dp = 12.dp,
-    waves: Int = 16,
+    strokeWidth: Dp = 10.dp,
+    maxAmplitude: Dp = 4.dp,
+    gap: Dp = 9.dp,
+    waves: Int = 28,
 ) {
     val phase by rememberInfiniteTransition(label = "wave").animateFloat(
         initialValue = 0f,
         targetValue = (2 * PI).toFloat(),
-        animationSpec = infiniteRepeatable(tween(durationMillis = 2_400, easing = LinearEasing), RepeatMode.Restart),
+        animationSpec = infiniteRepeatable(tween(durationMillis = 1_400, easing = LinearEasing), RepeatMode.Restart),
         label = "wavePhase",
     )
     Canvas(modifier) {
@@ -84,7 +84,7 @@ fun WavyRing(
                 useCenter = false,
                 topLeft = Offset(center.x - radius, center.y - radius),
                 size = Size(radius * 2f, radius * 2f),
-                style = Stroke(width = stroke * 0.5f, cap = StrokeCap.Round),
+                style = Stroke(width = stroke * 0.6f, cap = StrokeCap.Round),
             )
         }
     }

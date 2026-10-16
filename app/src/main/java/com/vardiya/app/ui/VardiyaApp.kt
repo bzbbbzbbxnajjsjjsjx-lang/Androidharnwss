@@ -130,9 +130,6 @@ private fun MainContent(viewModel: VardiyaViewModel) {
                 activeShiftStart = activeShiftStart,
                 onStartShift = viewModel::startShift,
                 onFinishShift = viewModel::finishShift,
-                onPreviousMonth = viewModel::previousMonth,
-                onNextMonth = viewModel::nextMonth,
-                onToday = viewModel::currentMonth,
                 contentPadding = padding,
             )
             Destination.CALENDAR -> CalendarScreen(

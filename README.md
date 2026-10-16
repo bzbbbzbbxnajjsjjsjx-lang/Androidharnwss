@@ -2,7 +2,7 @@
 
 Material 3 (Jetpack Compose) vardiya ve kazanç takip uygulaması.
 
-- **Özet**: Vardiyayı Başlat / Bitir tuşu (canlı sayaç, dalgalı ilerleme, anlık kazanç), ayın kazancı, maaş hedefine dalgalı (wavy) ilerleme çubuğu, çalışılan saat için dairesel dalgalı gösterge, normal / fazla mesai / bayram dökümü.
+- **Özet**: Tek büyük dalgalı (wavy) yuvarlak ilerleme; vardiya süresine doğru dolar, ortasında sayaç ve canlı kazanç. Altta Başlat / Bitir tuşları.
 - **Takvim**: Aylık takvim; vardiyalı günler, resmi tatiller ve arifeler (13:00'ten itibaren) işaretli. Güne dokunarak vardiya ekle.
 - **Vardiyalar**: Ayın vardiya listesi, vardiya başı kazanç.
 - **Ayarlar**: Aylık maaş (varsayılan 28.000 ₺), aylık saat (225), fazla mesai (×1,5) ve tatil (×2) çarpanları.

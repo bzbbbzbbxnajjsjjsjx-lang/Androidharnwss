@@ -68,6 +68,7 @@ fun CalendarScreen(
     onAddShift: (LocalDate) -> Unit,
     onEditShift: (Shift) -> Unit,
     contentPadding: PaddingValues,
+    today: LocalDate = LocalDate.now(),
 ) {
     val month = summary.month
     val holidays = remember(month) { TurkishHolidays.inMonth(month).associateBy { it.date } }
@@ -104,7 +105,6 @@ fun CalendarScreen(
         val leadingBlanks = firstDay.dayOfWeek.value - DayOfWeek.MONDAY.value
         val cells = leadingBlanks + month.lengthOfMonth()
         val rows = (cells + 6) / 7
-        val today = LocalDate.now()
 
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             for (row in 0 until rows) {

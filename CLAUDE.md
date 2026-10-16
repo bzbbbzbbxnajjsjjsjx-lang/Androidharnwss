@@ -7,7 +7,9 @@ library.
 ## Commands
 
 ```bash
-./gradlew testDebugUnitTest      # JVM unit tests (domain logic)
+./gradlew testDebugUnitTest      # JVM unit tests (domain logic) and screenshot tests
+./gradlew recordRoborazziDebug   # re-record screenshots after an intended UI change
+./gradlew verifyRoborazziDebug   # compare screens with app/src/test/screenshots/ (CI runs this)
 ./gradlew detekt                 # static analysis, incl. Compose rules
 ./gradlew lintDebug              # Android lint
 ./gradlew assembleDebug assembleRelease
@@ -27,7 +29,7 @@ read the GitHub Actions result before calling a change done.
 - `data/ShiftRepository.kt` — shifts, settings and the running shift's start time as JSON in
   Preferences DataStore.
 - `ui/VardiyaViewModel.kt` — single `AndroidViewModel`; exposes `StateFlow`s.
-- `ui/VardiyaApp.kt` — scaffold, bottom bar, tab switching.
+- `ui/VardiyaApp.kt` — scaffold, tab switching. `ui/Destination.kt` — tabs and the bottom bar.
 - `ui/screens/` — Summary (wavy ring, start/finish), Calendar, Shifts, Settings, shift editor sheet.
 - `ui/components/` — `WavyRing` (hand-drawn M3 Expressive circular wavy indicator),
   `MonthSwitcher`, `Format.kt` (Turkish number/money/date formatting).
@@ -41,6 +43,13 @@ read the GitHub Actions result before calling a change done.
 - Breaks are unpaid. Times are minutes from midnight; `endMinute <= startMinute` means the shift
   ends the next day.
 - Any change here needs a test in `app/src/test/.../EarningsCalculatorTest.kt`.
+
+## Screenshot tests
+
+`app/src/test/.../ui/ScreenshotTest.kt` renders every tab (Roborazzi + Robolectric, SDK 34) with
+fixed data, a fixed clock (`SummaryScreen(clock = …)`) and a fixed day (`CalendarScreen(today = …)`)
+into `app/src/test/screenshots/`. A UI change that alters a screen fails CI until the images are
+re-recorded and committed; look at the new PNGs before committing them.
 
 ## Conventions
 

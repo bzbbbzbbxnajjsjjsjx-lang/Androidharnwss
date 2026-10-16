@@ -29,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Alignment
@@ -61,14 +62,16 @@ fun SummaryScreen(
     onStartShift: () -> Unit,
     onFinishShift: () -> Unit,
     contentPadding: PaddingValues,
+    clock: () -> Long = System::currentTimeMillis,
 ) {
     val settings = summary.settings
     val running = activeShiftStart != null
     val haptic = LocalHapticFeedback.current
+    val currentClock by rememberUpdatedState(clock)
 
-    val now by produceState(System.currentTimeMillis(), activeShiftStart) {
+    val now by produceState(clock(), activeShiftStart) {
         while (activeShiftStart != null) {
-            value = System.currentTimeMillis()
+            value = currentClock()
             delay(1_000)
         }
     }
@@ -91,7 +94,7 @@ fun SummaryScreen(
         } else {
             while (true) {
                 withFrameMillis {
-                    value = ((System.currentTimeMillis() - activeShiftStart).coerceAtLeast(0) % 60_000L) / 60_000f
+                    value = ((currentClock() - activeShiftStart).coerceAtLeast(0) % 60_000L) / 60_000f
                 }
             }
         }

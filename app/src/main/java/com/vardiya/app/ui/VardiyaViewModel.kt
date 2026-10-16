@@ -8,13 +8,18 @@ import com.vardiya.app.domain.EarningsCalculator
 import com.vardiya.app.domain.MonthSummary
 import com.vardiya.app.domain.PaySettings
 import com.vardiya.app.domain.Shift
+import com.vardiya.app.domain.TurkishHolidays
 import com.vardiya.app.domain.shiftFromClock
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -32,9 +37,36 @@ class VardiyaViewModel(application: Application) : AndroidViewModel(application)
     val settings: StateFlow<PaySettings> =
         repository.settings.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PaySettings())
 
+    /** Current time every second while a shift is running, null otherwise. */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val clock = repository.activeShiftStart.flatMapLatest { start ->
+        if (start == null) flowOf(null) else flow {
+            while (true) {
+                emit(System.currentTimeMillis())
+                delay(1_000)
+            }
+        }
+    }
+
+    /** Month totals; a running shift is counted live, up to the current second. */
     val summary: StateFlow<MonthSummary> =
-        combine(_month, repository.shifts, repository.settings) { month, shifts, settings ->
-            EarningsCalculator.summarize(month, shifts, settings)
+        combine(_month, repository.shifts, repository.settings, repository.activeShiftStart, clock) { month, shifts, settings, start, now ->
+            if (start == null || now == null) return@combine EarningsCalculator.summarize(month, shifts, settings)
+            val zone = ZoneId.systemDefault()
+            val startTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(start), zone)
+            val nowTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(now), zone)
+            val live = shiftFromClock(startTime, nowTime)?.copy(id = Shift.LIVE_ID)
+            val withLive = EarningsCalculator.summarize(month, shifts + listOfNotNull(live), settings)
+            if (YearMonth.from(startTime) != month) return@combine withLive
+            // Seconds of the current minute, at the rate that applies right now.
+            val seconds = ((now - start) / 1000 % 60).toInt()
+            val multiplier = when {
+                TurkishHolidays.on(nowTime.toLocalDate())?.let { !nowTime.isBefore(it.start) } == true -> settings.holidayMultiplier
+                withLive.workedMinutes >= settings.monthlyHours * 60 -> settings.overtimeMultiplier
+                else -> 1.0
+            }
+            val partial = settings.hourlyRate / 3600.0 * seconds * multiplier
+            withLive.copy(partialMinutePay = partial)
         }.stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5_000),

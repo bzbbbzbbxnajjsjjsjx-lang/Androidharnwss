@@ -99,6 +99,12 @@ class EarningsCalculatorTest {
     }
 
     @Test
+    fun partialMinutePayIsAddedToTotal() {
+        val summary = EarningsCalculator.summarize(YearMonth.of(2026, 10), listOf(shift("2026-10-14", 8, 9)), settings, partialMinutePay = 1.0)
+        assertEquals(rate + 1.0, summary.totalPay, 0.001)
+    }
+
+    @Test
     fun shiftsOfOtherMonthsAreIgnored() {
         val summary = EarningsCalculator.summarize(YearMonth.of(2026, 10), listOf(shift("2026-09-30", 8, 16)), settings)
         assertEquals(0.0, summary.totalPay, 0.0)

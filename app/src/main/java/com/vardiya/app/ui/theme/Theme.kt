@@ -79,7 +79,8 @@ private val DarkColors = darkColorScheme(
 @Composable
 fun VardiyaTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
+    // Wallpaper colors can wash the app out to grey, so the brand scheme is the default.
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val colorScheme = when {

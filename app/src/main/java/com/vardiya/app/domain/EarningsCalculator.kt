@@ -16,6 +16,8 @@ data class MonthSummary(
     val month: YearMonth,
     val settings: PaySettings,
     val shifts: List<ShiftPay>,
+    /** Pay for the seconds of the running shift's current, not yet completed minute. */
+    val partialMinutePay: Double = 0.0,
 ) {
     val regularMinutes: Int = shifts.sumOf { it.regularMinutes }
     val overtimeMinutes: Int = shifts.sumOf { it.overtimeMinutes }
@@ -26,7 +28,7 @@ data class MonthSummary(
     val regularPay: Double = regularMinutes * minuteRate
     val overtimePay: Double = overtimeMinutes * minuteRate * settings.overtimeMultiplier
     val holidayPay: Double = holidayMinutes * minuteRate * settings.holidayMultiplier
-    val totalPay: Double = regularPay + overtimePay + holidayPay
+    val totalPay: Double = regularPay + overtimePay + holidayPay + partialMinutePay
 
     /** Share of the monthly salary earned so far (can exceed 1 with overtime). */
     val salaryProgress: Float =
@@ -48,7 +50,12 @@ object EarningsCalculator {
      * - the rest → hourly rate (salary / monthly hours)
      * Breaks are deducted proportionally across the shift.
      */
-    fun summarize(month: YearMonth, allShifts: List<Shift>, settings: PaySettings): MonthSummary {
+    fun summarize(
+        month: YearMonth,
+        allShifts: List<Shift>,
+        settings: PaySettings,
+        partialMinutePay: Double = 0.0,
+    ): MonthSummary {
         val threshold = (settings.monthlyHours * 60).toInt()
         val minuteRate = settings.hourlyRate / 60.0
         var cumulative = 0
@@ -72,7 +79,7 @@ object EarningsCalculator {
                 val pay = minuteRate * (regular + overtime * settings.overtimeMultiplier + holiday * settings.holidayMultiplier)
                 ShiftPay(shift, regular, overtime, holiday, pay)
             }
-        return MonthSummary(month, settings, pays)
+        return MonthSummary(month, settings, pays, partialMinutePay)
     }
 
     /** Minutes of [start, end) that fall on public holidays (half days count from 13:00). */

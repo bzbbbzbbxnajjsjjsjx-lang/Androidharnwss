@@ -62,6 +62,7 @@ fun ShiftsScreen(
         items(summary.shifts, key = { it.shift.id }) { pay ->
             val shift = pay.shift
             val tags = buildList {
+                if (shift.isLive) add("Devam ediyor")
                 if (pay.holidayMinutes > 0) add("Bayram ${formatDuration(pay.holidayMinutes)}")
                 if (pay.overtimeMinutes > 0) add("Fazla mesai ${formatDuration(pay.overtimeMinutes)}")
                 if (shift.breakMinutes > 0) add("Mola ${shift.breakMinutes} dk")

@@ -28,8 +28,12 @@ data class Shift(
     /** Paid minutes: span minus break. */
     val workedMinutes: Int get() = (spanMinutes - breakMinutes).coerceAtLeast(0)
 
+    val isLive: Boolean get() = id == LIVE_ID
+
     companion object {
         const val MINUTES_PER_DAY = 24 * 60
+        /** Id of the not-yet-saved shift that is currently running. */
+        const val LIVE_ID = -1L
     }
 }
 

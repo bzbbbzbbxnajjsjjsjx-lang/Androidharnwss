@@ -112,7 +112,7 @@ private fun MainContent(viewModel: VardiyaViewModel) {
         },
         floatingActionButton = {
             AnimatedVisibility(
-                visible = destination == Destination.SUMMARY || destination == Destination.SHIFTS,
+                visible = destination == Destination.SHIFTS,
                 enter = scaleIn(),
                 exit = scaleOut(),
             ) {
@@ -141,7 +141,7 @@ private fun MainContent(viewModel: VardiyaViewModel) {
                 onNextMonth = viewModel::nextMonth,
                 onToday = viewModel::currentMonth,
                 onAddShift = { editor = EditorRequest(it) },
-                onEditShift = { editor = EditorRequest(it.localDate, it) },
+                onEditShift = { if (!it.isLive) editor = EditorRequest(it.localDate, it) },
                 contentPadding = padding,
             )
             Destination.SHIFTS -> ShiftsScreen(
@@ -149,7 +149,7 @@ private fun MainContent(viewModel: VardiyaViewModel) {
                 onPreviousMonth = viewModel::previousMonth,
                 onNextMonth = viewModel::nextMonth,
                 onToday = viewModel::currentMonth,
-                onEditShift = { editor = EditorRequest(it.localDate, it) },
+                onEditShift = { if (!it.isLive) editor = EditorRequest(it.localDate, it) },
                 contentPadding = padding,
             )
             Destination.SETTINGS -> SettingsScreen(

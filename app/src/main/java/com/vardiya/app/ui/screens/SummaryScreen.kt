@@ -64,6 +64,7 @@ import com.vardiya.app.ui.components.MorphingShape
 import com.vardiya.app.ui.components.VardiyaShapes
 import com.vardiya.app.ui.components.formatClock
 import com.vardiya.app.ui.components.ShortDateFormatter
+import com.vardiya.app.ui.components.TurkishLocale
 import com.vardiya.app.ui.components.formatDuration
 import com.vardiya.app.ui.components.formatMoney
 import kotlinx.coroutines.delay
@@ -92,8 +93,7 @@ fun SummaryScreen(
             start = 16.dp,
             end = 16.dp,
             top = contentPadding.calculateTopPadding() + 8.dp,
-            // Leave room for the FAB above the navigation bar.
-            bottom = contentPadding.calculateBottomPadding() + 88.dp,
+            bottom = contentPadding.calculateBottomPadding() + 16.dp,
         ),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
@@ -133,6 +133,11 @@ fun SummaryScreen(
 @Composable
 private fun EarningsCard(summary: MonthSummary) {
     val progress = rememberEntryProgress(summary.salaryProgress.coerceIn(0f, 1f))
+    // Counts up from zero on entry, then follows the live total every second.
+    val money = remember { Animatable(0f) }
+    LaunchedEffect(summary.totalPay) {
+        money.animateTo(summary.totalPay.toFloat(), tween(durationMillis = 900, easing = FastOutSlowInEasing))
+    }
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -144,7 +149,7 @@ private fun EarningsCard(summary: MonthSummary) {
         Column(Modifier.padding(24.dp)) {
             Text("Bu ay kazancın", style = MaterialTheme.typography.titleMedium)
             Text(
-                formatMoney(summary.totalPay),
+                formatMoney(money.value.toDouble()),
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.SemiBold,
             )
@@ -152,13 +157,14 @@ private fun EarningsCard(summary: MonthSummary) {
             LinearWavyProgressIndicator(
                 progress = { progress.value },
                 modifier = Modifier.fillMaxWidth(),
+                amplitude = { 1f },
                 color = MaterialTheme.colorScheme.primary,
                 trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
             )
             Spacer(Modifier.height(12.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(
-                    "İlerleme %${(summary.salaryProgress * 100).roundToInt()}",
+                    "İlerleme %${formatPercent(summary.salaryProgress)}",
                     style = MaterialTheme.typography.labelLarge,
                 )
                 Text(
@@ -189,6 +195,7 @@ private fun HoursCard(summary: MonthSummary) {
                 CircularWavyProgressIndicator(
                     progress = { progress.value },
                     modifier = Modifier.size(104.dp),
+                    amplitude = { 1f },
                     color = MaterialTheme.colorScheme.tertiary,
                     trackColor = MaterialTheme.colorScheme.tertiaryContainer,
                 )
@@ -200,7 +207,7 @@ private fun HoursCard(summary: MonthSummary) {
                     modifier = Modifier.size(68.dp),
                 ) {
                     Text(
-                        "%${(progress.value * 100).roundToInt()}",
+                        "%${formatPercent(progress.value)}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onTertiaryContainer,
@@ -318,6 +325,7 @@ private fun ShiftControlCard(
             LinearWavyProgressIndicator(
                 progress = { entry.value },
                 modifier = Modifier.fillMaxWidth(),
+                amplitude = { 1f },
                 color = MaterialTheme.colorScheme.primary,
                 trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
             )
@@ -377,6 +385,9 @@ private fun ExpressiveButton(
         content = content,
     )
 }
+
+/** 0.0123 → "1,2". */
+private fun formatPercent(fraction: Float): String = "%.1f".format(TurkishLocale, fraction * 100)
 
 /** 225.0 → "225", 1.5 → "1,5". */
 internal fun Double.formatHours(): String =

@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -29,13 +29,13 @@ fun MonthSwitcher(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        FilledTonalIconButton(onClick = onPrevious) {
+        IconButton(onClick = onPrevious) {
             Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Önceki ay")
         }
         TextButton(onClick = onToday) {
             Text(formatMonth(month), style = MaterialTheme.typography.titleLarge)
         }
-        FilledTonalIconButton(onClick = onNext) {
+        IconButton(onClick = onNext) {
             Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Sonraki ay")
         }
     }

@@ -4,7 +4,11 @@ Material 3 vardiya ve kazanç takip uygulaması.
 
 **Kurulum:** Aşağıdaki `Vardiya-*.apk` dosyasını telefona indir ve aç (bilinmeyen kaynaklardan yüklemeye izin vermen gerekebilir). Android 8.0 ve üzeri.
 
-### Yenilikler
+### Yenilikler (1.2)
+- **Para canlı artıyor:** Vardiya sürerken "Bu ay kazancın" toplamı, maaş ilerleme çubuğu ve çalışılan süre her saniye güncellenir.
+- **Düzen:** Duvar kâğıdından gelen gri renkler yerine uygulamanın kendi renkleri; Özet'teki üst üste binen "+ Vardiya" tuşu kaldırıldı (Vardiyalar sekmesinde duruyor); dalgalı çubuklar düşük yüzdelerde de dalgalı; yüzdeler ondalıklı.
+
+### 1.1
 - **Vardiyayı Başlat / Bitir tuşu:** Başlatınca süre canlı sayılır, dalgalı çubuk vardiya süresine (varsayılan 8 saat) doğru dolar, o ana kadarki kazanç gösterilir. Bitir'e basınca vardiya kaydedilir. Uygulama kapansa da sayaç devam eder.
 - **Girişte şekil animasyonu:** Açılışta şekil değiştiren M3 Expressive yükleme göstergesi; ilerleme göstergeleri sıfırdan dolarak açılır, yüzde rozeti daireden kurabiye şekline dönüşür. Tuşlar basılınca köşe şekli değişir.
 

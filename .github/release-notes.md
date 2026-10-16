@@ -4,7 +4,10 @@ Material 3 vardiya ve kazanç takip uygulaması.
 
 **Kurulum:** Aşağıdaki `Vardiya-*.apk` dosyasını telefona indir ve aç (bilinmeyen kaynaklardan yüklemeye izin vermen gerekebilir). Android 8.0 ve üzeri.
 
-### Yenilikler (1.6.1)
+### Yenilikler (1.6.2)
+- **Vardiya başında halka boş görünmüyor:** Vardiya başlar başlamaz halkada akan bir dalga görünüyor (8 saatlik vardiyanın ilk ~25 dakikasında halka bu en küçük boyda kalır, sonra gerçek orana göre dolar). Önceden ilk dakikalarda sadece bir nokta görünüyordu.
+
+### 1.6.1
 - **Halka vardiyanın süresiyle doluyor:** Artık her dakika başa dönmüyor; geçen süre ile vardiya süresinin (Ayarlar'daki saat) oranında, akıcı şekilde doluyor. 8 saatlik vardiyada 4. saatte halka yarı dolu; süre aşılınca dolu kalır.
 - **Dalgalı halka artık Material'ın kendi bileşeni:** Elle çizilen halka yerine Material 3 Expressive'in resmi dalgalı ilerleme göstergesi; dalgalar düzgün ve eşit, vardiya yokken halka düz ve boş görünüyor.
 

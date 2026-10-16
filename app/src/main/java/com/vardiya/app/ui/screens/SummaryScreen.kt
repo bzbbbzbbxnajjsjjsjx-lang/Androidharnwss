@@ -45,6 +45,7 @@ import com.vardiya.app.ui.components.WavyRing
 import com.vardiya.app.ui.components.formatMoney
 import com.vardiya.app.ui.components.formatMonth
 import kotlinx.coroutines.delay
+import kotlin.math.max
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -132,7 +133,9 @@ fun SummaryScreen(
         ) {
             Box(contentAlignment = Alignment.Center) {
                 WavyRing(
-                    progress = { shiftProgress },
+                    // Early in a shift the true share is a dot; show at least one wavelength so
+                    // the flowing wave is visible from the first second.
+                    progress = { if (running) max(shiftProgress, MIN_VISIBLE_PROGRESS) else 0f },
                     amplitude = { waveAmplitude },
                     modifier = Modifier.size(270.dp),
                 )
@@ -216,6 +219,9 @@ fun SummaryScreen(
         Spacer(Modifier.height(16.dp))
     }
 }
+
+/** About one 37.5dp wavelength of the 270dp ring. */
+private const val MIN_VISIBLE_PROGRESS = 0.05f
 
 /** Icon and text sized for a Medium button. */
 @Composable

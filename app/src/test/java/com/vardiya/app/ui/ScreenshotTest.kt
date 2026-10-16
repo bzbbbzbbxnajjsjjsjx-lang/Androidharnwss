@@ -64,6 +64,10 @@ class ScreenshotTest {
 
     @Test fun summaryIdle() = capture("summary_idle", Destination.SUMMARY) { SummaryContent(it, running = false) }
 
+    @Test fun summaryJustStarted() = capture("summary_just_started", Destination.SUMMARY) {
+        SummaryContent(it, running = true, clock = shiftStart + 16_000)
+    }
+
     @Test fun summaryRunning() = capture("summary_running", Destination.SUMMARY) { SummaryContent(it, running = true) }
 
     @Test @Config(qualifiers = "+night")
@@ -83,7 +87,7 @@ class ScreenshotTest {
     }
 
     @Composable
-    private fun SummaryContent(padding: PaddingValues, running: Boolean) {
+    private fun SummaryContent(padding: PaddingValues, running: Boolean, clock: Long = now) {
         SummaryScreen(
             summary = summary,
             partialPay = 0.0,
@@ -91,7 +95,7 @@ class ScreenshotTest {
             onStartShift = {},
             onFinishShift = {},
             contentPadding = padding,
-            clock = { now },
+            clock = { clock },
         )
     }
 

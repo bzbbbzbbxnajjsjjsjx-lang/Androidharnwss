@@ -34,7 +34,7 @@ for this codebase and what was removed or renamed in between. Changelog details:
 | `ui/VardiyaApp.kt` opening animation | `LoadingIndicator(Modifier.size(96.dp))` | Same API, still experimental. |
 | `ui/VardiyaApp.kt` bottom bar | `NavigationBar` + `NavigationBarItem` | `ShortNavigationBar` + `ShortNavigationBarItem` is the Expressive bar (64dp, pill indicator). |
 | `ui/screens/SummaryScreen.kt` `ExpressiveButton` | hand-animated `RoundedCornerShape(percent)` | `Button(onClick, shapes = ButtonDefaults.shapes(), …)` plus `ButtonDefaults.MediumContainerHeight` (56dp) or `LargeContainerHeight` (96dp); the size helpers give padding, icon size and text style. Delete `ExpressiveButton`. |
-| `ui/components/WavyRing.kt` | custom Canvas ring | Keep. `CircularWavyProgressIndicator` still uses fixed token sizes (4dp stroke, 1.6dp amplitude) meant for 40–48dp; at 270dp you would pass `stroke`, `trackStroke`, `wavelength`, `gapSize` and an `amplitude` lambda, which is what the custom ring already does. |
+| `ui/components/WavyRing.kt` | custom Canvas ring | Replaced in 1.6.1 by `CircularWavyProgressIndicator` with `stroke`, `trackStroke`, `gapSize` and `wavelength` scaled to 10dp; the custom wave was uneven. |
 | Text styles | `fontWeight = FontWeight.SemiBold/Bold` on regular roles | `MaterialTheme.typography.displaySmallEmphasized`, `headlineMediumEmphasized`, etc. |
 
 ## Removed or renamed between alpha14 and beta01

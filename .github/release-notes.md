@@ -4,7 +4,10 @@ Material 3 vardiya ve kazanç takip uygulaması.
 
 **Kurulum:** Aşağıdaki `Vardiya-*.apk` dosyasını telefona indir ve aç (bilinmeyen kaynaklardan yüklemeye izin vermen gerekebilir). Android 8.0 ve üzeri.
 
-### Yenilikler (1.6.0)
+### Yenilikler (1.6.1)
+- **Dalgalı halka artık Material'ın kendi bileşeni:** Elle çizilen halka yerine Material 3 Expressive'in resmi dalgalı ilerleme göstergesi; dalgalar düzgün ve eşit, vardiya yokken halka düz ve boş görünüyor.
+
+### 1.6.0
 - **Material 3 Expressive tam sürüm:** Uygulama Material 3'ün 1.5 sürümüne geçti; Expressive bileşenler artık deneysel değil.
 - **Yeni alt menü:** Daha ince (64dp) Expressive menü, seçili sekmenin simgesi hap biçimli bir arka planla vurgulanıyor.
 - **Başlat ve Bitir butonları:** Resmi Expressive butonlar; basınca köşeleri yaylanarak kareleşiyor.

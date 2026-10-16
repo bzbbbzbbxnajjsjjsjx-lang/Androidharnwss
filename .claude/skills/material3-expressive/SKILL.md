@@ -47,7 +47,7 @@ grep -rln "@material3expressive" .claude/skills/material3-expressive/references/
 
 1. **Library first.** Use the Material component if one exists; it brings theming, motion,
    semantics and touch targets. Draw your own only when the component can't be configured to
-   fit (as with the Summary ring), and take its proportions from `tokens.md`.
+   fit (the Summary ring turned out to be configurable), and take its proportions from `tokens.md`.
 2. **Motion from the theme.** Get specs from `MaterialTheme.motionScheme`
    (`fastSpatialSpec()`, `defaultSpatialSpec()`, `slowSpatialSpec()`, `…EffectsSpec()`).
    Spatial properties (size, position, shape) use springs that may overshoot; color and alpha use
@@ -69,12 +69,11 @@ grep -rln "@material3expressive" .claude/skills/material3-expressive/references/
 
 - Opt-ins `ExperimentalMaterial3Api` and `ExperimentalMaterial3ExpressiveApi` are set for the
   whole module in `app/build.gradle.kts`; don't add `@OptIn` at call sites.
-- `ui/components/WavyRing.kt` is a hand-drawn circular wavy indicator because the library one is
-  sized for ~48dp. Its proportions follow `CircularProgressIndicatorTokens`: amplitude 0.4 ×
-  stroke (1.6dp on 4dp), wavelength 3.75 × stroke (15dp), gap 1 × stroke (4dp), track as thick as
-  the wave, round caps, one wavelength of travel per second, a whole number of waves around the
-  ring. `progress` and `amplitude` are lambdas read in the draw scope; keep them that way so
-  per-frame changes don't recompose.
+- `ui/components/WavyRing.kt` wraps `CircularWavyProgressIndicator` at hero size (270dp). The
+  library defaults are sized for ~48dp, so stroke, gap and wavelength are scaled with the
+  `CircularProgressIndicatorTokens` proportions: gap 1 × stroke, wavelength 3.75 × stroke (10dp
+  stroke → 37.5dp). The earlier hand-drawn Canvas ring drew an uneven wave; don't go back to it.
+  `progress` and `amplitude` stay lambdas so per-frame changes don't recompose.
 - `SummaryScreen.kt` start/finish use `Button(shapes = ButtonDefaults.shapesFor(height))` at
   `MediumContainerHeight`, with icon, spacing and text from the `…For(height)` helpers. The bottom
   bar is `ShortNavigationBar`; the theme is `MaterialExpressiveTheme`.

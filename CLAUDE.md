@@ -31,7 +31,7 @@ read the GitHub Actions result before calling a change done.
 - `ui/VardiyaViewModel.kt` — single `AndroidViewModel`; exposes `StateFlow`s.
 - `ui/VardiyaApp.kt` — scaffold, tab switching. `ui/Destination.kt` — tabs and the bottom bar.
 - `ui/screens/` — Summary (wavy ring, start/finish), Calendar, Shifts, Settings, shift editor sheet.
-- `ui/components/` — `WavyRing` (hand-drawn M3 Expressive circular wavy indicator),
+- `ui/components/` — `WavyRing` (Material's `CircularWavyProgressIndicator` scaled to hero size),
   `MonthSwitcher`, `Format.kt` (Turkish number/money/date formatting).
 - `ui/theme/Theme.kt` — teal brand scheme; dynamic color is off on purpose.
 

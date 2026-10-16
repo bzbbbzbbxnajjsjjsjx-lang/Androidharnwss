@@ -1,7 +1,6 @@
 package com.vardiya.app.ui.screens
 
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -100,7 +99,11 @@ fun SummaryScreen(
         }
     }
     // The wave grows in when a shift starts and flattens when it ends.
-    val waveAmplitude by animateFloatAsState(if (running) 1f else 0f, tween(durationMillis = 500), label = "waveAmplitude")
+    val waveAmplitude by animateFloatAsState(
+        targetValue = if (running) 1f else 0f,
+        animationSpec = MaterialTheme.motionScheme.slowEffectsSpec(),
+        label = "waveAmplitude",
+    )
 
     // A light tick every full minute (one lap of the ring).
     val minutesElapsed = (elapsedSeconds / 60).toInt()
@@ -129,8 +132,6 @@ fun SummaryScreen(
                 WavyRing(
                     progress = { minuteProgress },
                     amplitude = { waveAmplitude },
-                    color = MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                     modifier = Modifier.size(270.dp),
                 )
                 // One TalkBack stop that reads status, timer and earnings together.

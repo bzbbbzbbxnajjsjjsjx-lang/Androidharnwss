@@ -66,5 +66,7 @@ down under its own version heading). Pushing a `v*` tag, or running the workflow
 
 ## Skills
 
-`.claude/skills/` holds Compose UI, performance audit, accessibility, testing and Material 3
-Expressive guidance; load the matching one before working in that area.
+`.claude/skills/` holds Compose UI, performance audit, accessibility and testing guidance, plus
+`material3-expressive`: the full Material 3 Expressive reference (every material3 1.5.0-beta01
+API with KDoc, design tokens, official samples, release notes, and the upgrade path from the
+pinned 1.4.0-alpha14). Load the matching skill before working in that area.

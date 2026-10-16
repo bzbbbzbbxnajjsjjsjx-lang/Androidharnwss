@@ -1,75 +1,93 @@
 ---
 name: material3-expressive
-description: Material 3 Expressive guidance for this app (Compose material3 1.4.0-alpha) — wavy progress, loading indicators, shape morphing, expressive motion, button and navigation components, and the hand-drawn WavyRing. Use when adding or changing visual components, shapes, motion or the Summary screen ring.
+description: Complete Material 3 Expressive reference for Jetpack Compose (androidx material3 1.5.0-beta01) — every public API with KDoc, all design tokens, the official samples, theme/motion/shape/typography foundations, component guides, release notes since 1.4.0-alpha01 and the upgrade path from this app's pinned 1.4.0-alpha14. Use for any work on visual components, shapes, motion, typography, the Summary screen ring, or a material3 upgrade.
 ---
 
-# Material 3 Expressive in Vardiya
+# Material 3 Expressive
 
-The app pins `androidx.compose.material3:material3` to the `1.4.0-alpha` line
-(`gradle/libs.versions.toml`) because the Expressive components live there. Both
-`ExperimentalMaterial3Api` and `ExperimentalMaterial3ExpressiveApi` are opted in for the whole
-module in `app/build.gradle.kts`; never add `@OptIn` at call sites.
+Material 3 Expressive is the 2025 evolution of Material 3: springy, physics-based motion; a
+richer shape system with morphing between states; emphasized typography; bigger, bolder
+component sizes; and new components (button groups, split buttons, floating toolbars, FAB menu,
+wavy progress, loading indicator, short navigation bar, wide navigation rail, flexible app bars,
+segmented lists, expressive menus).
 
-## Before you write a component
+## Versions — read first
 
-1. Check whether Material already ships it (list below). Prefer the library component over a
-   custom one; it gets theming, accessibility semantics and motion for free.
-2. If the library version doesn't fit (as with the ring, see below), draw it yourself but take the
-   proportions from the androidx tokens and say so in a KDoc comment.
-3. Colors come from `MaterialTheme.colorScheme` (the teal scheme in `ui/theme/Theme.kt`), never
-   hard-coded `Color(...)` in screens. Dynamic color stays off.
-4. Alpha APIs move between releases. When bumping `material3`, read the release notes for renamed
-   parameters and fix every call site in the same commit; CI is the only place the build is
-   verified.
+| | material3 | Expressive status |
+| --- | --- | --- |
+| **This app** | `1.4.0-alpha14` (May 2025) | everything experimental, several APIs since renamed |
+| 1.4.0 stable | Sep 2025 | shipped without Expressive (only `ShortNavigationBar`, `WideNavigationRail`) |
+| **This reference** | `1.5.0-beta01` (Oct 2026) | stable, except `LoadingIndicator`, `ContainedLoadingIndicator`, `MaterialShapes` and some menu/slider/pull-to-refresh bits (`@ExperimentalMaterial3ExpressiveApi`) |
 
-## Components available in the 1.4.0-alpha line
+Before writing code against an API from this reference, check it exists in the version the app
+actually builds with (`gradle/libs.versions.toml`). `references/migration.md` lists what was
+renamed or removed after alpha14 and how upgrading changes this app's code.
 
-| Need | Component |
+## Reference map
+
+| Need | Read |
 | --- | --- |
-| Indeterminate wait (app opening) | `LoadingIndicator`, `ContainedLoadingIndicator` |
-| Determinate progress, small sizes | `LinearWavyProgressIndicator`, `CircularWavyProgressIndicator` |
-| Shape-morphing buttons | `Button(shapes = ButtonDefaults.shapes())`, `ToggleButton`, `IconButton` with `IconButtonDefaults.shapes()` |
-| Connected actions | `ButtonGroup`, `SplitButtonLayout` |
-| Floating actions | `FloatingActionButtonMenu`, `ToggleFloatingActionButton`, `HorizontalFloatingToolbar` |
-| Navigation | `ShortNavigationBar` + `ShortNavigationBarItem`, `WideNavigationRail` |
-| Expressive shapes | `MaterialShapes.*` (e.g. `Cookie9Sided`, `Sunny`, `Pill`) with `.toShape()` |
-| Motion | `MotionScheme.expressive()`, via `MaterialTheme(motionScheme = …)` or `MaterialExpressiveTheme` |
+| Theme, color roles, motion springs, corner scale, MaterialShapes and morphing, emphasized type scale, component sizes | `references/foundations.md` |
+| Which component to use and how; expressive knobs; sample names | `references/components.md` |
+| Exact signature, parameters and KDoc of any public API | `references/api/INDEX.md` → `references/api/<File>.md` |
+| Exact spec values (dp, shapes, color roles, type roles, motion) | `references/tokens.md` (search `## <Component>Tokens`) |
+| Working example code (official androidx samples) | `references/samples/<File>Samples.kt` — KDoc `@sample …samples.Foo` points to `fun Foo` |
+| When/why an API changed | `references/changelog.md` |
+| Upgrading this app off alpha14 | `references/migration.md` |
 
-Verify an API exists in the pinned version before using it (check the material3 release notes or
-the sources jar); don't guess parameter names.
+Search rather than read whole files: `api/` is ~1.5 MB, `tokens.md` ~130 KB.
 
-## The Summary ring (`ui/components/WavyRing.kt`)
+```bash
+grep -rn "fun ButtonGroup" .claude/skills/material3-expressive/references/api/
+grep -n -A12 "^## SplitButtonMediumTokens" .claude/skills/material3-expressive/references/tokens.md
+grep -rln "@material3expressive" .claude/skills/material3-expressive/references/api/   # APIs tagged Expressive
+```
 
-`CircularWavyProgressIndicator` has a fixed wave height meant for ~48dp and looks flat at the
-270dp hero size, so the ring is drawn on a `Canvas`. Keep it matching the Material tokens, scaled
-to `strokeWidth`:
+## Principles to apply
 
-- wave amplitude = 0.4 × stroke (token: 1.6dp on a 4dp stroke)
-- wavelength = 3.75 × stroke (token: 15dp), rounded to a whole number of waves around the ring
-  so the wave closes seamlessly
-- gap between the active wave and the track = 1 × stroke (token: 4dp), on both ends
-- track is as thick as the wave, round caps on both
-- the wave travels one wavelength per second (`phase` 0 → 2π over 1 000 ms, linear)
-- amplitude animates 0 → 1 over 500 ms when a shift starts and back to 0 when it ends
+1. **Library first.** Use the Material component if one exists; it brings theming, motion,
+   semantics and touch targets. Draw your own only when the component can't be configured to
+   fit (as with the Summary ring), and take its proportions from `tokens.md`.
+2. **Motion from the theme.** Get specs from `MaterialTheme.motionScheme`
+   (`fastSpatialSpec()`, `defaultSpatialSpec()`, `slowSpatialSpec()`, `…EffectsSpec()`).
+   Spatial properties (size, position, shape) use springs that may overshoot; color and alpha use
+   the non-overshooting effects specs. No hand-picked `tween` durations except continuous loops.
+3. **Shape carries state.** Pressed, checked and selected states morph shape (round ↔ square)
+   through the components' `shapes` parameters (`ButtonDefaults.shapes()`,
+   `ToggleButtonDefaults.shapesFor(size)`, `IconButtonDefaults.shapes()`, `ListItemDefaults.shapes()`).
+   Use `MaterialShapes` for decorative or hero shapes, not for touch targets.
+4. **Emphasis through roles.** Bigger sizes (`Medium`/`Large`/`ExtraLarge` buttons and FABs),
+   `…Emphasized` type styles and container colors (`primaryContainer`, vibrant variants) mark the
+   primary action. One emphasized hero per screen.
+5. **Colors from the scheme.** Never hard-code colors in screens; this app's teal scheme lives in
+   `ui/theme/Theme.kt` with dynamic color off.
+6. **Accessibility holds.** Touch targets ≥ 48dp; morphing animates the drawn shape, not the
+   layout bounds; information shown by shape, color or waves is also in text or semantics; tracks
+   below 3:1 contrast need the stop indicator.
 
-`progress` and `amplitude` are lambdas read inside the draw scope, so per-frame updates
-invalidate only the drawing, not composition. Keep it that way: don't turn them back into plain
-`Float` parameters.
+## This app
 
-## Shape morphing and motion
+- Opt-ins `ExperimentalMaterial3Api` and `ExperimentalMaterial3ExpressiveApi` are set for the
+  whole module in `app/build.gradle.kts`; don't add `@OptIn` at call sites.
+- `ui/components/WavyRing.kt` is a hand-drawn circular wavy indicator because the library one is
+  sized for ~48dp. Its proportions follow `CircularProgressIndicatorTokens`: amplitude 0.4 ×
+  stroke (1.6dp on 4dp), wavelength 3.75 × stroke (15dp), gap 1 × stroke (4dp), track as thick as
+  the wave, round caps, one wavelength of travel per second, a whole number of waves around the
+  ring. `progress` and `amplitude` are lambdas read in the draw scope; keep them that way so
+  per-frame changes don't recompose.
+- `SummaryScreen.kt` `ExpressiveButton` hand-animates the pressed corner with a spring
+  (`DampingRatioMediumBouncy`, `StiffnessMedium`); after an upgrade, replace it with
+  `Button(shapes = ButtonDefaults.shapes())` (see `references/migration.md`).
+- Haptics pair with emphasized actions: `HapticFeedbackType.Confirm` on start, `LongPress` on
+  finish, `ContextClick` for each minute tick.
 
-- Pressed buttons morph from pill to a squarer corner (see `ExpressiveButton` in
-  `SummaryScreen.kt`). For new buttons prefer `ButtonDefaults.shapes()`; if you animate a shape by
-  hand, use a spring (`Spring.DampingRatioMediumBouncy`, `Spring.StiffnessMedium`) to match.
-- Expressive motion uses springs for spatial changes (size, position, shape) and short tweens for
-  effects (color, alpha). Don't use long linear tweens except for continuous loops like the wave.
-- Pair emphasized actions with haptics the way the Summary screen does
-  (`HapticFeedbackType.Confirm` on start, `LongPress` on finish, `ContextClick` for ticks).
+## Keeping the reference current
 
-## Accessibility checks for expressive components
+`scripts/refresh.sh <androidx commit> <version>` regenerates `api/`, `tokens.md` and `samples/`
+from the androidx GitHub mirror. The commit is the end of the `+log/A..B/compose/material3` range
+for that version on the material3 release notes page. Then update `foundations.md`,
+`components.md`, `migration.md` and `changelog.md` by hand, and the version table above.
 
-- Decorative shapes, waves and loading indicators need no text; the information they show must
-  also be in readable text (the ring's percentage is in the centre label).
-- Morphing or bouncing must not move a touch target out from under the finger; keep the layout
-  size fixed and animate only the drawn shape.
-- Touch targets stay at least 48dp; the start/finish buttons are 64dp tall.
+Sources: AOSP androidx (`compose/material3/material3` at commit
+`19991f2c0858aadfcb442ce02b2c8e4743c96898`, 1.5.0-beta01) and the material3 release notes;
+Apache License 2.0, see `references/NOTICE`.

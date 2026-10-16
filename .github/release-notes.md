@@ -4,7 +4,10 @@ Material 3 vardiya ve kazanç takip uygulaması.
 
 **Kurulum:** Aşağıdaki `Vardiya-*.apk` dosyasını telefona indir ve aç (bilinmeyen kaynaklardan yüklemeye izin vermen gerekebilir). Android 8.0 ve üzeri.
 
-### Yenilikler (1.5.1)
+### Yenilikler (1.5.2)
+- **Dalgalı halka resmi Material 3 Expressive oranlarına çekildi:** Dalga boyu çizgi kalınlığının 3,75 katı (halkada 21 dalga), düz kısım dalgalı kısımla aynı kalınlıkta, dalga saniyede bir dalga boyu akar.
+
+### 1.5.1
 - **Performans:** Vardiya sürerken Takvim ve Vardiyalar ekranları artık her saniye yeniden çizilmiyor; saniyelik güncelleme sadece Özet ekranında çalışıyor.
 - **Erişilebilirlik (TalkBack):** Takvim günleri tarih, tatil, vardiya kazancı ve "bugün" bilgisiyle okunuyor; halka ortası ve aylık kazanç tek öğe olarak okunuyor; başlıklar başlık olarak işaretli.
 

@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.max
+import kotlin.math.round
 import kotlin.math.sin
 
 /**
@@ -41,14 +42,17 @@ fun WavyRing(
     modifier: Modifier = Modifier,
     amplitude: () -> Float = { 1f },
     strokeWidth: Dp = 10.dp,
-    maxAmplitude: Dp = 4.dp,
-    gap: Dp = 9.dp,
-    waves: Int = 28,
 ) {
+    // Proportions of the Material 3 Expressive circular wavy indicator (androidx tokens:
+    // thickness 4dp, wave amplitude 1.6dp, wavelength 15dp, gap 4dp, track as thick as the wave),
+    // scaled to this stroke width.
+    val maxAmplitude = strokeWidth * 0.4f
+    val gap = strokeWidth
+    val wavelength = strokeWidth * 3.75f
     val phase by rememberInfiniteTransition(label = "wave").animateFloat(
         initialValue = 0f,
         targetValue = (2 * PI).toFloat(),
-        animationSpec = infiniteRepeatable(tween(durationMillis = 1_400, easing = LinearEasing), RepeatMode.Restart),
+        animationSpec = infiniteRepeatable(tween(durationMillis = 1_000, easing = LinearEasing), RepeatMode.Restart),
         label = "wavePhase",
     )
     Canvas(modifier) {
@@ -58,6 +62,8 @@ fun WavyRing(
         val radius = (size.minDimension - stroke) / 2f - maxAmplitude.toPx()
         val center = Offset(size.width / 2f, size.height / 2f)
         val top = -PI.toFloat() / 2f
+        // Whole number of waves around the ring so the wave closes up seamlessly.
+        val waves = max(1, round(twoPi * radius / wavelength.toPx()).toInt())
 
         // Never fully empty: at 0 the ring shows a small dot at the top.
         val sweep = max(progress().coerceIn(0f, 1f) * twoPi, 0.001f)
@@ -84,7 +90,7 @@ fun WavyRing(
                 useCenter = false,
                 topLeft = Offset(center.x - radius, center.y - radius),
                 size = Size(radius * 2f, radius * 2f),
-                style = Stroke(width = stroke * 0.6f, cap = StrokeCap.Round),
+                style = Stroke(width = stroke, cap = StrokeCap.Round),
             )
         }
     }

@@ -50,8 +50,8 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 
 /**
- * One big wavy ring that flows and fills one lap per minute while a shift runs, with the timer,
- * shift progress and this shift's earnings inside. Start and finish buttons sit at the bottom.
+ * One big wavy ring that fills in proportion to the elapsed share of the planned shift length,
+ * with the timer, shift progress and this shift's earnings inside. Start and finish buttons sit at the bottom.
  */
 @Composable
 fun SummaryScreen(
@@ -86,14 +86,16 @@ fun SummaryScreen(
         0.0
     }
 
-    // The ring completes one lap per minute so the movement is clearly visible.
-    val minuteProgress by produceState(0f, activeShiftStart) {
+    // The ring fills with the elapsed share of the planned shift, updated every frame so it moves
+    // smoothly; it stays full once the shift runs past its planned length.
+    val shiftMillis = (settings.shiftHours * 3_600_000).coerceAtLeast(1.0)
+    val shiftProgress by produceState(0f, activeShiftStart, shiftMillis) {
         if (activeShiftStart == null) {
             value = 0f
         } else {
             while (true) {
                 withFrameMillis {
-                    value = ((currentClock() - activeShiftStart).coerceAtLeast(0) % 60_000L) / 60_000f
+                    value = ((currentClock() - activeShiftStart).coerceAtLeast(0) / shiftMillis).toFloat().coerceIn(0f, 1f)
                 }
             }
         }
@@ -105,7 +107,7 @@ fun SummaryScreen(
         label = "waveAmplitude",
     )
 
-    // A light tick every full minute (one lap of the ring).
+    // A light tick every full minute.
     val minutesElapsed = (elapsedSeconds / 60).toInt()
     var lastMinute by remember { mutableIntStateOf(minutesElapsed) }
     LaunchedEffect(minutesElapsed, running) {
@@ -130,7 +132,7 @@ fun SummaryScreen(
         ) {
             Box(contentAlignment = Alignment.Center) {
                 WavyRing(
-                    progress = { minuteProgress },
+                    progress = { shiftProgress },
                     amplitude = { waveAmplitude },
                     modifier = Modifier.size(270.dp),
                 )

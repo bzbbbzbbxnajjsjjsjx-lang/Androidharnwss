@@ -34,6 +34,6 @@
     <ID>ModifierMissing:SummaryScreen.kt:@Composable fun SummaryScreen</ID>
     <ID>ModifierWithoutDefault:ShiftEditorSheet.kt:modifier: Modifier</ID>
     <ID>ViewModelForwarding:VardiyaApp.kt:MainContent(viewModel)</ID>
-    <ID>ViewModelForwarding:VardiyaApp.kt:SummaryRoute( viewModel = viewModel, summary = summary, activeShiftStart = activeShiftStart, contentPadding = padding, )</ID>
+    <ID>ViewModelForwarding:VardiyaApp.kt:SummaryRoute( viewModel = viewModel, summary = summary, activeShift = activeShift, contentPadding = padding, )</ID>
   </CurrentIssues>
 </SmellBaseline>

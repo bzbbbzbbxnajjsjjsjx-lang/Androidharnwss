@@ -25,7 +25,7 @@ import com.vardiya.app.ui.components.MonthSwitcher
 import com.vardiya.app.ui.components.ShortDateFormatter
 import com.vardiya.app.ui.components.formatClock
 import com.vardiya.app.ui.components.formatDuration
-import com.vardiya.app.ui.components.formatMoney
+import com.vardiya.app.ui.components.ShiftRowTrailing
 
 @Composable
 fun ShiftsScreen(
@@ -34,6 +34,7 @@ fun ShiftsScreen(
     onNextMonth: () -> Unit,
     onToday: () -> Unit,
     onEditShift: (Shift) -> Unit,
+    onDeleteShift: (Shift) -> Unit,
     contentPadding: PaddingValues,
 ) {
     LazyColumn(
@@ -75,7 +76,7 @@ fun ShiftsScreen(
                         Text("${formatClock(shift.startMinute)} – ${formatClock(shift.endMinute)} · ${formatDuration(shift.workedMinutes)}")
                     },
                     supportingContent = if (tags.isEmpty()) null else ({ Text(tags.joinToString(" · ")) }),
-                    trailingContent = { Text(formatMoney(pay.pay), style = MaterialTheme.typography.titleMedium) },
+                    trailingContent = { ShiftRowTrailing(shift, pay.pay, onDeleteShift) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }

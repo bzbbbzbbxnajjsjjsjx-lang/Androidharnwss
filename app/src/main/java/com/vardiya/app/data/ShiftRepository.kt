@@ -5,9 +5,11 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.vardiya.app.domain.ActiveShift
 import com.vardiya.app.domain.PaySettings
 import com.vardiya.app.domain.Shift
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
@@ -29,12 +31,38 @@ class ShiftRepository(private val context: Context) {
             ?: PaySettings()
     }
 
-    /** Epoch millis when the running shift was started, or null when no shift is running. */
-    val activeShiftStart: Flow<Long?> = context.dataStore.data.map { it[ACTIVE_START] }
+    /** The running shift with its breaks, or null when no shift is running. */
+    val activeShift: Flow<ActiveShift?> = context.dataStore.data.map { prefs ->
+        prefs[ACTIVE_START]?.let { ActiveShift(it, prefs[BREAK_START], prefs[PAST_BREAK] ?: 0L) }
+    }.distinctUntilChanged()
 
-    suspend fun setActiveShiftStart(epochMillis: Long?) {
+    suspend fun startShift(nowMillis: Long) {
         context.dataStore.edit { prefs ->
-            if (epochMillis == null) prefs.remove(ACTIVE_START) else prefs[ACTIVE_START] = epochMillis
+            prefs[ACTIVE_START] = nowMillis
+            prefs.remove(BREAK_START)
+            prefs.remove(PAST_BREAK)
+        }
+    }
+
+    suspend fun startBreak(nowMillis: Long) {
+        context.dataStore.edit { prefs ->
+            if (prefs[ACTIVE_START] != null && prefs[BREAK_START] == null) prefs[BREAK_START] = nowMillis
+        }
+    }
+
+    suspend fun endBreak(nowMillis: Long) {
+        context.dataStore.edit { prefs ->
+            val breakStart = prefs[BREAK_START] ?: return@edit
+            prefs[PAST_BREAK] = (prefs[PAST_BREAK] ?: 0L) + (nowMillis - breakStart).coerceAtLeast(0)
+            prefs.remove(BREAK_START)
+        }
+    }
+
+    suspend fun clearActiveShift() {
+        context.dataStore.edit { prefs ->
+            prefs.remove(ACTIVE_START)
+            prefs.remove(BREAK_START)
+            prefs.remove(PAST_BREAK)
         }
     }
 
@@ -60,5 +88,7 @@ class ShiftRepository(private val context: Context) {
         val SHIFTS = stringPreferencesKey("shifts")
         val SETTINGS = stringPreferencesKey("settings")
         val ACTIVE_START = longPreferencesKey("active_shift_start")
+        val BREAK_START = longPreferencesKey("active_break_start")
+        val PAST_BREAK = longPreferencesKey("active_past_break")
     }
 }

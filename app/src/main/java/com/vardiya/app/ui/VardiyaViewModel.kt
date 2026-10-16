@@ -4,12 +4,14 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.vardiya.app.data.ShiftRepository
+import com.vardiya.app.domain.ActiveShift
 import com.vardiya.app.domain.EarningsCalculator
 import com.vardiya.app.domain.MonthSummary
 import com.vardiya.app.domain.PaySettings
+import com.vardiya.app.domain.ReportBuilder
+import com.vardiya.app.domain.Reports
 import com.vardiya.app.domain.Shift
 import com.vardiya.app.domain.TurkishHolidays
-import com.vardiya.app.domain.shiftFromClock
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -38,10 +40,14 @@ class VardiyaViewModel(application: Application) : AndroidViewModel(application)
     val settings: StateFlow<PaySettings> =
         repository.settings.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PaySettings())
 
+    /** The running shift with its breaks, null when none is running. */
+    val activeShift: StateFlow<ActiveShift?> =
+        repository.activeShift.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
     /** Current time every second while a shift is running, null otherwise. Only the summary screen uses it. */
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val secondClock: Flow<Long?> = repository.activeShiftStart.flatMapLatest { start ->
-        if (start == null) flowOf<Long?>(null) else flow<Long?> {
+    private val secondClock: Flow<Long?> = repository.activeShift.flatMapLatest { active ->
+        if (active == null) flowOf<Long?>(null) else flow<Long?> {
             while (true) {
                 emit(System.currentTimeMillis())
                 delay(1_000)
@@ -49,51 +55,62 @@ class VardiyaViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    /** Ticks each time the running shift completes a full minute, null while no shift runs. */
+    /** Ticks each time the running shift completes a full worked minute, null while no shift runs. */
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val minuteClock: Flow<Long?> = repository.activeShiftStart.flatMapLatest { start ->
-        if (start == null) flowOf<Long?>(null) else flow<Long?> {
+    private val minuteClock: Flow<Long?> = repository.activeShift.flatMapLatest { active ->
+        if (active == null) flowOf<Long?>(null) else flow<Long?> {
             while (true) {
                 val now = System.currentTimeMillis()
                 emit(now)
-                // Sleep until just after the next full minute of the shift.
-                delay(60_000 - (now - start).coerceAtLeast(0) % 60_000 + 50)
+                // Worked time stands still during a break; otherwise wake just after the next full minute.
+                delay(if (active.onBreak) 60_000 else 60_000 - active.workedMillis(now) % 60_000 + 50)
             }
         }
     }
+
+    /** All saved shifts plus the running one, changing at most once a minute. */
+    private val shiftsWithLive: Flow<List<Shift>> =
+        combine(repository.shifts, repository.activeShift, minuteClock) { shifts, active, now ->
+            val live = if (active != null && now != null) {
+                active.toShift(now, ZoneId.systemDefault())?.copy(id = Shift.LIVE_ID)
+            } else {
+                null
+            }
+            shifts + listOfNotNull(live)
+        }
 
     /**
      * Month totals in whole minutes, the same granularity a saved shift has. A running shift is
      * included. Changes at most once a minute, so Calendar and Shifts do not recompose every second.
      */
     val summary: StateFlow<MonthSummary> =
-        combine(_month, repository.shifts, repository.settings, repository.activeShiftStart, minuteClock) { month, shifts, settings, start, now ->
-            if (start == null || now == null) return@combine EarningsCalculator.summarize(month, shifts, settings)
-            val zone = ZoneId.systemDefault()
-            val live = shiftFromClock(
-                LocalDateTime.ofInstant(Instant.ofEpochMilli(start), zone),
-                LocalDateTime.ofInstant(Instant.ofEpochMilli(now), zone),
-            )?.copy(id = Shift.LIVE_ID)
-            EarningsCalculator.summarize(month, shifts + listOfNotNull(live), settings)
+        combine(_month, shiftsWithLive, repository.settings) { month, shifts, settings ->
+            EarningsCalculator.summarize(month, shifts, settings)
         }.stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5_000),
             EarningsCalculator.summarize(YearMonth.now(), emptyList(), PaySettings()),
         )
 
+    /** Weekly and monthly totals over every shift. */
+    val reports: StateFlow<Reports> =
+        combine(shiftsWithLive, repository.settings) { shifts, settings -> ReportBuilder.build(shifts, settings) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), Reports())
+
     /**
-     * Pay for the seconds of the running shift's current minute, ticking every second. Collected
-     * only by the summary screen, so the per-second work stops when another tab is open.
+     * Pay for the seconds of the running shift's current worked minute, ticking every second.
+     * Stands still during a break. Collected only by the summary screen, so the per-second work
+     * stops when another tab is open.
      */
     val partialPay: StateFlow<Double> =
-        combine(summary, repository.activeShiftStart, secondClock) { summary, start, now ->
-            if (start == null || now == null) return@combine 0.0
+        combine(summary, repository.activeShift, secondClock) { summary, active, now ->
+            if (active == null || now == null) return@combine 0.0
             val zone = ZoneId.systemDefault()
-            val startTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(start), zone)
+            val startTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(active.startMillis), zone)
             if (YearMonth.from(startTime) != summary.month) return@combine 0.0
             val nowTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(now), zone)
             val settings = summary.settings
-            val seconds = ((now - start) / 1000 % 60).toInt()
+            val seconds = (active.workedMillis(now) / 1000 % 60).toInt()
             val multiplier = when {
                 TurkishHolidays.on(nowTime.toLocalDate())?.let { !nowTime.isBefore(it.start) } == true -> settings.holidayMultiplier
                 summary.workedMinutes >= settings.monthlyHours * 60 -> settings.overtimeMultiplier
@@ -101,10 +118,6 @@ class VardiyaViewModel(application: Application) : AndroidViewModel(application)
             }
             settings.hourlyRate / 3600.0 * seconds * multiplier
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0.0)
-
-    /** Start time of the running shift (epoch millis), null when none is running. */
-    val activeShiftStart: StateFlow<Long?> =
-        repository.activeShiftStart.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     /** False until stored data is loaded and the opening shape animation has played. */
     private val _ready = MutableStateFlow(false)
@@ -119,19 +132,26 @@ class VardiyaViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun startShift() {
-        viewModelScope.launch { repository.setActiveShiftStart(System.currentTimeMillis()) }
+        viewModelScope.launch { repository.startShift(System.currentTimeMillis()) }
+    }
+
+    /** Starts a break, or ends the one that is running. */
+    fun toggleBreak() {
+        val active = activeShift.value ?: return
+        val now = System.currentTimeMillis()
+        viewModelScope.launch {
+            if (active.onBreak) repository.endBreak(now) else repository.startBreak(now)
+        }
     }
 
     fun finishShift() {
-        val startMillis = activeShiftStart.value ?: return
-        val zone = ZoneId.systemDefault()
-        val start = LocalDateTime.ofInstant(Instant.ofEpochMilli(startMillis), zone)
-        val shift = shiftFromClock(start, LocalDateTime.now(zone))
+        val active = activeShift.value ?: return
+        val shift = active.toShift(System.currentTimeMillis(), ZoneId.systemDefault())
         viewModelScope.launch {
             if (shift != null) repository.upsertShift(shift.copy(id = System.currentTimeMillis()))
-            repository.setActiveShiftStart(null)
+            repository.clearActiveShift()
             // Show the month the shift was recorded in.
-            _month.value = YearMonth.from(start)
+            _month.value = YearMonth.from(Instant.ofEpochMilli(active.startMillis).atZone(ZoneId.systemDefault()))
         }
     }
 

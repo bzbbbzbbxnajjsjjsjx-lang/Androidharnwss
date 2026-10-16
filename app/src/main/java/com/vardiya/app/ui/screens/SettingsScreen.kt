@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -15,12 +16,14 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.heading
@@ -36,6 +39,8 @@ fun SettingsScreen(
     onSave: (PaySettings) -> Unit,
     contentPadding: PaddingValues,
 ) {
+    var useHourly by rememberSaveable(settings) { mutableStateOf(settings.useHourlyRate) }
+    var hourlyRate by rememberSaveable(settings) { mutableStateOf(settings.customHourlyRate.formatHours()) }
     var salary by rememberSaveable(settings) { mutableStateOf(settings.monthlySalary.formatHours()) }
     var hours by rememberSaveable(settings) { mutableStateOf(settings.monthlyHours.formatHours()) }
     var overtime by rememberSaveable(settings) { mutableStateOf(settings.overtimeMultiplier.formatHours()) }
@@ -49,6 +54,8 @@ fun SettingsScreen(
         overtimeMultiplier = overtime.toDecimal() ?: settings.overtimeMultiplier,
         holidayMultiplier = holiday.toDecimal() ?: settings.holidayMultiplier,
         shiftHours = shiftHours.toDecimal()?.takeIf { it > 0 } ?: settings.shiftHours,
+        useHourlyRate = useHourly,
+        customHourlyRate = hourlyRate.toDecimal() ?: settings.customHourlyRate,
     )
 
     Column(
@@ -69,7 +76,18 @@ fun SettingsScreen(
             modifier = Modifier.semantics { heading() },
         )
 
-        NumberField("Aylık maaş (₺)", salary) { salary = it }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("Saatlik ücretimi kendim gireceğim", modifier = Modifier.weight(1f))
+            Switch(checked = useHourly, onCheckedChange = { useHourly = it })
+        }
+        if (useHourly) {
+            NumberField("Saatlik ücret (₺)", hourlyRate) { hourlyRate = it }
+        } else {
+            NumberField("Aylık maaş (₺)", salary) { salary = it }
+        }
         NumberField("Aylık çalışma saati", hours) { hours = it }
         NumberField("Fazla mesai çarpanı", overtime) { overtime = it }
         NumberField("Bayram / tatil çarpanı", holiday) { holiday = it }
@@ -84,8 +102,9 @@ fun SettingsScreen(
                 Text("Saatlik ücretin", style = MaterialTheme.typography.labelLarge)
                 Text(formatMoney(parsed.hourlyRate), style = MaterialTheme.typography.headlineMedium)
                 Text(
-                    "${formatMoney(parsed.monthlySalary)} ÷ ${parsed.monthlyHours.formatHours()} saat. " +
-                        "225 saat, İş Kanunu'ndaki haftalık 45 saatin aylık karşılığıdır. " +
+                    (if (parsed.useHourlyRate) "Kendi girdiğin saatlik ücret. " else
+                        "${formatMoney(parsed.monthlySalary)} ÷ ${parsed.monthlyHours.formatHours()} saat. " +
+                        "225 saat, İş Kanunu'ndaki haftalık 45 saatin aylık karşılığıdır. ") +
                         "Fazla mesai (225 saati aşan) ×${parsed.overtimeMultiplier.formatHours()}, " +
                         "bayram ve genel tatil çalışması ×${parsed.holidayMultiplier.formatHours()} ödenir.",
                     style = MaterialTheme.typography.bodyMedium,

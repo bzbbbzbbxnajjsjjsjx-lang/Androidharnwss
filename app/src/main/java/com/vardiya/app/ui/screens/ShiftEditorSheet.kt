@@ -60,7 +60,7 @@ fun ShiftEditorSheet(
     request: EditorRequest,
     onDismiss: () -> Unit,
     onSave: (Shift) -> Unit,
-    onDelete: (Long) -> Unit,
+    onDelete: (Shift) -> Unit,
 ) {
     val existing = request.shift
     var date by rememberSaveable { mutableStateOf((existing?.localDate ?: request.date).toString()) }
@@ -140,7 +140,7 @@ fun ShiftEditorSheet(
 
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 if (existing != null) {
-                    OutlinedButton(onClick = { onDelete(existing.id); onDismiss() }) {
+                    OutlinedButton(onClick = { onDelete(existing); onDismiss() }) {
                         Icon(Icons.Filled.Delete, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
                         Text("Sil")

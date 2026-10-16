@@ -4,7 +4,14 @@ Material 3 vardiya ve kazanç takip uygulaması.
 
 **Kurulum:** Aşağıdaki `Vardiya-*.apk` dosyasını telefona indir ve aç (bilinmeyen kaynaklardan yüklemeye izin vermen gerekebilir). Android 8.0 ve üzeri.
 
-### Yenilikler (1.6.2)
+### Yenilikler (1.7.0)
+- **Mola:** Vardiya sürerken Başlat/Bitir'in üstünde **Mola ver** tuşu var. Moladayken sayaç ve kazanç durur, "Molada · ücret durdu" yazar; **Moladan dön** ile devam edilir. Toplam mola ekranda görünür ve vardiyaya kaydedilir, ücrete dahil edilmez.
+- **Takvim'e yeni sekmeler:** *Çalışma saatleri* sekmesinde ayın her çalışılan günü, kaç saat çalışıldığı, saat aralıkları, mola ve kazanç; üstte ayın toplamı. *Raporlar* sekmesinde haftalık (Pazartesi–Pazar) ve aylık raporlar: çalışılan süre, vardiya ve gün sayısı, günlük ortalama, mola, fazla mesai, bayram saatleri ve kazanç.
+- **Vardiya silme:** Vardiyalar listesinde ve takvimdeki gün penceresinde her vardiyanın yanında silme tuşu; silmeden önce onay sorulur.
+- **Saatlik ücret:** Ayarlar'da "Saatlik ücretimi kendim gireceğim" açılınca aylık maaş yerine saatlik ücret doğrudan girilebilir.
+- **Dalgalı halka:** F-Droid'in büyük dalgalı göstergesinin oranları (daha kalın çizgi, daha uzun dalga).
+
+### 1.6.2
 - **Vardiya başında halka boş görünmüyor:** Vardiya başlar başlamaz halkada akan bir dalga görünüyor (8 saatlik vardiyanın ilk ~25 dakikasında halka bu en küçük boyda kalır, sonra gerçek orana göre dolar). Önceden ilk dakikalarda sadece bir nokta görünüyordu.
 
 ### 1.6.1

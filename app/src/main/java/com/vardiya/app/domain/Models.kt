@@ -49,8 +49,49 @@ data class PaySettings(
     val holidayMultiplier: Double = 2.0,
     /** Planned length of a shift; the live shift progress bar fills up over this many hours. */
     val shiftHours: Double = 8.0,
+    /** When true the user enters [customHourlyRate] directly instead of a monthly salary. */
+    val useHourlyRate: Boolean = false,
+    /** Hourly wage in TL, used when [useHourlyRate] is set. */
+    val customHourlyRate: Double = 0.0,
 ) {
-    val hourlyRate: Double get() = if (monthlyHours > 0) monthlySalary / monthlyHours else 0.0
+    val hourlyRate: Double
+        get() = when {
+            useHourlyRate -> customHourlyRate
+            monthlyHours > 0 -> monthlySalary / monthlyHours
+            else -> 0.0
+        }
+}
+
+/**
+ * The shift started with the start button and not yet finished. Breaks are tracked in wall-clock
+ * millis: [pastBreakMillis] for finished breaks, [breakStartMillis] while a break is running.
+ * Pay stops while on a break.
+ */
+data class ActiveShift(
+    val startMillis: Long,
+    val breakStartMillis: Long? = null,
+    val pastBreakMillis: Long = 0L,
+) {
+    val onBreak: Boolean get() = breakStartMillis != null
+
+    fun breakMillis(nowMillis: Long): Long =
+        pastBreakMillis + (breakStartMillis?.let { (nowMillis - it).coerceAtLeast(0) } ?: 0L)
+
+    /** Paid time so far: elapsed time minus all breaks. */
+    fun workedMillis(nowMillis: Long): Long =
+        ((nowMillis - startMillis).coerceAtLeast(0) - breakMillis(nowMillis)).coerceAtLeast(0)
+
+    /**
+     * The shift as it would be saved at [nowMillis]: worked time in whole minutes, the rest of
+     * the span recorded as break. Null when less than a minute has been worked.
+     */
+    fun toShift(nowMillis: Long, zone: java.time.ZoneId): Shift? {
+        val start = LocalDateTime.ofInstant(java.time.Instant.ofEpochMilli(startMillis), zone)
+        val end = LocalDateTime.ofInstant(java.time.Instant.ofEpochMilli(nowMillis), zone)
+        val shift = shiftFromClock(start, end) ?: return null
+        val worked = (workedMillis(nowMillis) / 60_000).toInt().coerceAtMost(shift.spanMinutes)
+        return if (worked < 1) null else shift.copy(breakMinutes = shift.spanMinutes - worked)
+    }
 }
 
 /** Predefined shift slots offered in the editor. */

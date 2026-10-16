@@ -7,8 +7,10 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import com.github.takahirom.roborazzi.captureRoboImage
+import com.vardiya.app.domain.ActiveShift
 import com.vardiya.app.domain.EarningsCalculator
 import com.vardiya.app.domain.PaySettings
+import com.vardiya.app.domain.ReportBuilder
 import com.vardiya.app.domain.Shift
 import com.vardiya.app.ui.screens.CalendarScreen
 import com.vardiya.app.ui.screens.SettingsScreen
@@ -43,9 +45,7 @@ class ScreenshotTest {
     private val today = LocalDate.of(2026, 10, 16)
     private val month = YearMonth.of(2026, 10)
     private val settings = PaySettings()
-    private val summary = EarningsCalculator.summarize(
-        month = month,
-        allShifts = listOf(1, 2, 5, 6, 7, 8, 9, 12, 13, 14, 15).mapIndexed { i, day ->
+    private val shifts = listOf(1, 2, 5, 6, 7, 8, 9, 12, 13, 14, 15).mapIndexed { i, day ->
             val evening = day % 7 == 0
             Shift(
                 id = i + 1L,
@@ -54,9 +54,9 @@ class ScreenshotTest {
                 endMinute = if (evening) 0 else 16 * 60,
                 breakMinutes = 30,
             )
-        },
-        settings = settings,
-    )
+        }
+    private val summary = EarningsCalculator.summarize(month = month, allShifts = shifts, settings = settings)
+    private val reports = ReportBuilder.build(shifts, settings)
 
     /** 16 Ekim 2026 13:47:12; a shift running since 08:00. */
     private val now = LocalDateTime.of(2026, 10, 16, 13, 47, 12).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
@@ -70,6 +70,11 @@ class ScreenshotTest {
 
     @Test fun summaryRunning() = capture("summary_running", Destination.SUMMARY) { SummaryContent(it, running = true) }
 
+    /** On a break since 13:30 after an earlier 15 minute break. */
+    @Test fun summaryOnBreak() = capture("summary_on_break", Destination.SUMMARY) {
+        SummaryContent(it, running = true, breakStart = now - 17 * 60_000 - 12_000, pastBreak = 15 * 60_000L)
+    }
+
     @Test @Config(qualifiers = "+night")
     fun summaryRunningDark() = capture("summary_running_dark", Destination.SUMMARY) { SummaryContent(it, running = true) }
 
@@ -78,8 +83,20 @@ class ScreenshotTest {
     @Test @Config(qualifiers = "+night")
     fun calendarDark() = capture("calendar_dark", Destination.CALENDAR) { CalendarContent(it) }
 
+    @Test fun calendarHours() = capture("calendar_hours", Destination.CALENDAR) { CalendarContent(it, tab = 1) }
+
+    @Test fun calendarReports() = capture("calendar_reports", Destination.CALENDAR) { CalendarContent(it, tab = 2) }
+
     @Test fun shifts() = capture("shifts", Destination.SHIFTS) {
-        ShiftsScreen(summary = summary, onPreviousMonth = {}, onNextMonth = {}, onToday = {}, onEditShift = {}, contentPadding = it)
+        ShiftsScreen(
+            summary = summary,
+            onPreviousMonth = {},
+            onNextMonth = {},
+            onToday = {},
+            onEditShift = {},
+            onDeleteShift = {},
+            contentPadding = it,
+        )
     }
 
     @Test fun settings() = capture("settings", Destination.SETTINGS) {
@@ -87,12 +104,19 @@ class ScreenshotTest {
     }
 
     @Composable
-    private fun SummaryContent(padding: PaddingValues, running: Boolean, clock: Long = now) {
+    private fun SummaryContent(
+        padding: PaddingValues,
+        running: Boolean,
+        clock: Long = now,
+        breakStart: Long? = null,
+        pastBreak: Long = 0L,
+    ) {
         SummaryScreen(
             summary = summary,
             partialPay = 0.0,
-            activeShiftStart = if (running) shiftStart else null,
+            activeShift = if (running) ActiveShift(shiftStart, breakStart, pastBreak) else null,
             onStartShift = {},
+            onToggleBreak = {},
             onFinishShift = {},
             contentPadding = padding,
             clock = { clock },
@@ -100,16 +124,19 @@ class ScreenshotTest {
     }
 
     @Composable
-    private fun CalendarContent(padding: PaddingValues) {
+    private fun CalendarContent(padding: PaddingValues, tab: Int = 0) {
         CalendarScreen(
             summary = summary,
+            reports = reports,
             onPreviousMonth = {},
             onNextMonth = {},
             onToday = {},
             onAddShift = {},
             onEditShift = {},
+            onDeleteShift = {},
             contentPadding = padding,
             today = today,
+            initialTab = tab,
         )
     }
 

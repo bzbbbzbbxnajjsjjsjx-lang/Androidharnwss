@@ -34,13 +34,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.vardiya.app.domain.ActiveShift
 import com.vardiya.app.domain.MonthSummary
+import com.vardiya.app.domain.Reports
+import com.vardiya.app.domain.Shift
+import com.vardiya.app.ui.components.DeleteShiftDialog
 import com.vardiya.app.ui.screens.CalendarScreen
 import com.vardiya.app.ui.screens.EditorRequest
 import com.vardiya.app.ui.screens.SettingsScreen
 import com.vardiya.app.ui.screens.ShiftEditorSheet
 import com.vardiya.app.ui.screens.ShiftsScreen
 import com.vardiya.app.ui.screens.SummaryScreen
+import kotlinx.coroutines.flow.StateFlow
 import java.time.LocalDate
 
 @Composable
@@ -71,20 +76,48 @@ private fun OpeningScreen() {
     }
 }
 
+/** Collects the reports only while the calendar tab is shown. */
+@Composable
+private fun CalendarRoute(
+    reportsFlow: StateFlow<Reports>,
+    summary: MonthSummary,
+    onPreviousMonth: () -> Unit,
+    onNextMonth: () -> Unit,
+    onToday: () -> Unit,
+    onAddShift: (LocalDate) -> Unit,
+    onEditShift: (Shift) -> Unit,
+    onDeleteShift: (Shift) -> Unit,
+    contentPadding: PaddingValues,
+) {
+    val reports by reportsFlow.collectAsStateWithLifecycle()
+    CalendarScreen(
+        summary = summary,
+        reports = reports,
+        onPreviousMonth = onPreviousMonth,
+        onNextMonth = onNextMonth,
+        onToday = onToday,
+        onAddShift = onAddShift,
+        onEditShift = onEditShift,
+        onDeleteShift = onDeleteShift,
+        contentPadding = contentPadding,
+    )
+}
+
 /** Collects the per-second pay only while the summary tab is shown. */
 @Composable
 private fun SummaryRoute(
     viewModel: VardiyaViewModel,
     summary: MonthSummary,
-    activeShiftStart: Long?,
+    activeShift: ActiveShift?,
     contentPadding: PaddingValues,
 ) {
     val partialPay by viewModel.partialPay.collectAsStateWithLifecycle()
     SummaryScreen(
         summary = summary,
         partialPay = partialPay,
-        activeShiftStart = activeShiftStart,
+        activeShift = activeShift,
         onStartShift = viewModel::startShift,
+        onToggleBreak = viewModel::toggleBreak,
         onFinishShift = viewModel::finishShift,
         contentPadding = contentPadding,
     )
@@ -92,11 +125,12 @@ private fun SummaryRoute(
 
 @Composable
 private fun MainContent(viewModel: VardiyaViewModel) {
-    val activeShiftStart by viewModel.activeShiftStart.collectAsStateWithLifecycle()
+    val activeShift by viewModel.activeShift.collectAsStateWithLifecycle()
     val summary by viewModel.summary.collectAsStateWithLifecycle()
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     var destination by rememberSaveable { mutableStateOf(Destination.SUMMARY) }
     var editor by remember { mutableStateOf<EditorRequest?>(null) }
+    var pendingDelete by remember { mutableStateOf<Shift?>(null) }
 
     Scaffold(
         bottomBar = {
@@ -120,16 +154,18 @@ private fun MainContent(viewModel: VardiyaViewModel) {
             Destination.SUMMARY -> SummaryRoute(
                 viewModel = viewModel,
                 summary = summary,
-                activeShiftStart = activeShiftStart,
+                activeShift = activeShift,
                 contentPadding = padding,
             )
-            Destination.CALENDAR -> CalendarScreen(
+            Destination.CALENDAR -> CalendarRoute(
+                reportsFlow = viewModel.reports,
                 summary = summary,
                 onPreviousMonth = viewModel::previousMonth,
                 onNextMonth = viewModel::nextMonth,
                 onToday = viewModel::currentMonth,
                 onAddShift = { editor = EditorRequest(it) },
                 onEditShift = { if (!it.isLive) editor = EditorRequest(it.localDate, it) },
+                onDeleteShift = { pendingDelete = it },
                 contentPadding = padding,
             )
             Destination.SHIFTS -> ShiftsScreen(
@@ -138,6 +174,7 @@ private fun MainContent(viewModel: VardiyaViewModel) {
                 onNextMonth = viewModel::nextMonth,
                 onToday = viewModel::currentMonth,
                 onEditShift = { if (!it.isLive) editor = EditorRequest(it.localDate, it) },
+                onDeleteShift = { pendingDelete = it },
                 contentPadding = padding,
             )
             Destination.SETTINGS -> SettingsScreen(
@@ -154,8 +191,16 @@ private fun MainContent(viewModel: VardiyaViewModel) {
                 request = request,
                 onDismiss = { editor = null },
                 onSave = { viewModel.saveShift(it) },
-                onDelete = { viewModel.deleteShift(it) },
+                onDelete = { pendingDelete = it },
             )
         }
+    }
+
+    pendingDelete?.let { shift ->
+        DeleteShiftDialog(
+            shift = shift,
+            onConfirm = { viewModel.deleteShift(shift.id) },
+            onDismiss = { pendingDelete = null },
+        )
     }
 }

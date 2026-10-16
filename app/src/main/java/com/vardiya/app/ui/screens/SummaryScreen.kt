@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -38,8 +39,10 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.vardiya.app.domain.ActiveShift
 import com.vardiya.app.domain.EarningsCalculator
 import com.vardiya.app.domain.MonthSummary
+import com.vardiya.app.ui.components.PauseIcon
 import com.vardiya.app.ui.components.TurkishLocale
 import com.vardiya.app.ui.components.WavyRing
 import com.vardiya.app.ui.components.formatMoney
@@ -52,33 +55,38 @@ import java.time.ZoneId
 
 /**
  * One big wavy ring that fills in proportion to the elapsed share of the planned shift length,
- * with the timer, shift progress and this shift's earnings inside. Start and finish buttons sit at the bottom.
+ * with the timer, shift progress and this shift's earnings inside. Start and finish buttons sit at the bottom,
+ * with a break button above them while a shift runs; the timer and pay stand still during a break.
  */
 @Composable
 fun SummaryScreen(
     summary: MonthSummary,
     partialPay: Double,
-    activeShiftStart: Long?,
+    activeShift: ActiveShift?,
     onStartShift: () -> Unit,
+    onToggleBreak: () -> Unit,
     onFinishShift: () -> Unit,
     contentPadding: PaddingValues,
     clock: () -> Long = System::currentTimeMillis,
 ) {
     val settings = summary.settings
-    val running = activeShiftStart != null
+    val running = activeShift != null
+    val onBreak = activeShift?.onBreak == true
     val haptic = LocalHapticFeedback.current
     val currentClock by rememberUpdatedState(clock)
 
-    val now by produceState(clock(), activeShiftStart) {
-        while (activeShiftStart != null) {
+    val now by produceState(clock(), activeShift) {
+        while (activeShift != null) {
             value = currentClock()
             delay(1_000)
         }
     }
-    val elapsedSeconds = if (activeShiftStart != null) ((now - activeShiftStart) / 1000).coerceAtLeast(0) else 0L
-    val shiftEarned = if (activeShiftStart != null) {
+    // Worked time excludes breaks, so the timer and pay stand still while on a break.
+    val elapsedSeconds = activeShift?.workedMillis(now)?.div(1000) ?: 0L
+    val breakSeconds = activeShift?.breakMillis(now)?.div(1000) ?: 0L
+    val shiftEarned = if (activeShift != null) {
         val zone = ZoneId.systemDefault()
-        val start = LocalDateTime.ofInstant(Instant.ofEpochMilli(activeShiftStart), zone)
+        val start = LocalDateTime.ofInstant(Instant.ofEpochMilli(activeShift.startMillis), zone)
         val end = LocalDateTime.ofInstant(Instant.ofEpochMilli(now), zone)
         val holidaySeconds = (EarningsCalculator.holidayOverlapMinutes(start, end) * 60L).coerceAtMost(elapsedSeconds)
         settings.hourlyRate / 3600.0 *
@@ -90,13 +98,13 @@ fun SummaryScreen(
     // The ring fills with the elapsed share of the planned shift, updated every frame so it moves
     // smoothly; it stays full once the shift runs past its planned length.
     val shiftMillis = (settings.shiftHours * 3_600_000).coerceAtLeast(1.0)
-    val shiftProgress by produceState(0f, activeShiftStart, shiftMillis) {
-        if (activeShiftStart == null) {
+    val shiftProgress by produceState(0f, activeShift, shiftMillis) {
+        if (activeShift == null) {
             value = 0f
         } else {
             while (true) {
                 withFrameMillis {
-                    value = ((currentClock() - activeShiftStart).coerceAtLeast(0) / shiftMillis).toFloat().coerceIn(0f, 1f)
+                    value = (activeShift.workedMillis(currentClock()) / shiftMillis).toFloat().coerceIn(0f, 1f)
                 }
             }
         }
@@ -145,12 +153,16 @@ fun SummaryScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
-                        if (running) "Vardiya sürüyor · %${"%.1f".format(TurkishLocale, shiftPercent)}" else "Vardiya başlamadı",
+                        when {
+                            onBreak -> "Molada · ücret durdu"
+                            running -> "Vardiya sürüyor · %${"%.1f".format(TurkishLocale, shiftPercent)}"
+                            else -> "Vardiya başlamadı"
+                        },
                         style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = if (onBreak) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
-                        "%02d:%02d:%02d".format(elapsedSeconds / 3600, elapsedSeconds / 60 % 60, elapsedSeconds % 60),
+                        formatSeconds(elapsedSeconds),
                         style = MaterialTheme.typography.displaySmallEmphasized,
                     )
                     Text(
@@ -158,6 +170,13 @@ fun SummaryScreen(
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.primary,
                     )
+                    if (breakSeconds > 0) {
+                        Text(
+                            "Mola ${formatSeconds(breakSeconds)}",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
             Spacer(Modifier.height(32.dp))
@@ -179,6 +198,22 @@ fun SummaryScreen(
 
         // Medium (56dp) buttons: pill at rest, the corners squeeze while pressed.
         val buttonHeight = ButtonDefaults.MediumContainerHeight
+        if (running) {
+            FilledTonalButton(
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
+                    onToggleBreak()
+                },
+                shapes = ButtonDefaults.shapesFor(buttonHeight),
+                contentPadding = ButtonDefaults.contentPaddingFor(buttonHeight, hasStartIcon = true),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(buttonHeight),
+            ) {
+                if (onBreak) ButtonLabel(Icons.Filled.PlayArrow, "Moladan dön") else ButtonLabel(PauseIcon, "Mola ver")
+            }
+            Spacer(Modifier.height(12.dp))
+        }
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -220,8 +255,19 @@ fun SummaryScreen(
     }
 }
 
-/** About one 37.5dp wavelength of the 270dp ring. */
-private const val MIN_VISIBLE_PROGRESS = 0.05f
+private const val SECONDS_PER_MINUTE = 60L
+private const val SECONDS_PER_HOUR = 3_600L
+
+/** 3725 → "01:02:05". */
+private fun formatSeconds(seconds: Long): String =
+    "%02d:%02d:%02d".format(
+        seconds / SECONDS_PER_HOUR,
+        seconds % SECONDS_PER_HOUR / SECONDS_PER_MINUTE,
+        seconds % SECONDS_PER_MINUTE,
+    )
+
+/** About one 48dp wavelength of the 270dp ring. */
+private const val MIN_VISIBLE_PROGRESS = 0.06f
 
 /** Icon and text sized for a Medium button. */
 @Composable

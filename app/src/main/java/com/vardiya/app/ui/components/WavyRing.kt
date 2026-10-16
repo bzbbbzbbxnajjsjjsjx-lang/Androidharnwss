@@ -15,9 +15,9 @@ import androidx.compose.ui.unit.dp
 /**
  * Hero-size Material 3 Expressive circular wavy progress indicator.
  *
- * The library defaults (4dp stroke, 15dp wavelength, 4dp gap) are meant for a ~48dp indicator; at
- * hero size they turn into a tight zigzag, so stroke, gap and wavelength keep the token proportions
- * (gap = stroke, wavelength = 3.75 × stroke) scaled to [strokeWidth].
+ * Follows F-Droid's large first-start indicator (128dp ring, 6dp round stroke, 24dp wavelength,
+ * default 4dp gap and amplitude), scaled to [strokeWidth]: wavelength = 4 × stroke and
+ * gap = 2/3 × stroke.
  *
  * [progress] and [amplitude] (0 = flat, 1 = full wave) are read while drawing, so fast-changing
  * values do not recompose the screen.
@@ -29,7 +29,7 @@ fun WavyRing(
     amplitude: () -> Float = { 1f },
     color: Color = WavyProgressIndicatorDefaults.indicatorColor,
     trackColor: Color = WavyProgressIndicatorDefaults.trackColor,
-    strokeWidth: Dp = 10.dp,
+    strokeWidth: Dp = 12.dp,
 ) {
     val strokePx = with(LocalDensity.current) { strokeWidth.toPx() }
     val stroke = remember(strokePx) { Stroke(width = strokePx, cap = StrokeCap.Round) }
@@ -40,8 +40,8 @@ fun WavyRing(
         trackColor = trackColor,
         stroke = stroke,
         trackStroke = stroke,
-        gapSize = strokeWidth,
+        gapSize = strokeWidth * 2f / 3f,
         amplitude = { amplitude() },
-        wavelength = strokeWidth * 3.75f,
+        wavelength = strokeWidth * 4f,
     )
 }

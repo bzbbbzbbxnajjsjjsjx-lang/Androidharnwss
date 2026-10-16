@@ -26,18 +26,22 @@ read the GitHub Actions result before calling a change done.
 - `domain/` — pure Kotlin, unit-tested. `Models.kt` (`Shift`, `PaySettings`, `ShiftTemplate`),
   `EarningsCalculator.kt` (month summary and pay rules), `TurkishHolidays.kt` (public and
   religious holidays, half-day eves from 13:00).
-- `data/ShiftRepository.kt` — shifts, settings and the running shift's start time as JSON in
+- `domain/Reports.kt` — weekly and monthly totals. `ActiveShift` (in `Models.kt`) — the running
+  shift with its breaks; pay stops during a break.
+- `data/ShiftRepository.kt` — shifts, settings and the running shift (start time and breaks) in
   Preferences DataStore.
 - `ui/VardiyaViewModel.kt` — single `AndroidViewModel`; exposes `StateFlow`s.
 - `ui/VardiyaApp.kt` — scaffold, tab switching. `ui/Destination.kt` — tabs and the bottom bar.
-- `ui/screens/` — Summary (wavy ring, start/finish), Calendar, Shifts, Settings, shift editor sheet.
+- `ui/screens/` — Summary (wavy ring, start/break/finish), Calendar (tabs: month grid, working
+  hours, reports in `ReportsTab.kt`), Shifts, Settings, shift editor sheet.
 - `ui/components/` — `WavyRing` (Material's `CircularWavyProgressIndicator` scaled to hero size),
   `MonthSwitcher`, `Format.kt` (Turkish number/money/date formatting).
 - `ui/theme/Theme.kt` — teal brand scheme; dynamic color is off on purpose.
 
 ## Domain rules
 
-- Hourly rate = monthly salary ÷ monthly hours (default 28.000 ₺ ÷ 225 h).
+- Hourly rate = monthly salary ÷ monthly hours (default 28.000 ₺ ÷ 225 h), or the user's own
+  hourly wage when `PaySettings.useHourlyRate` is set.
 - Holiday minutes ×2 (İş Kanunu md. 47); eves and 28 Ekim count from 13:00.
 - Minutes beyond the monthly hours are overtime ×1,5 (md. 41).
 - Breaks are unpaid. Times are minutes from midnight; `endMinute <= startMinute` means the shift

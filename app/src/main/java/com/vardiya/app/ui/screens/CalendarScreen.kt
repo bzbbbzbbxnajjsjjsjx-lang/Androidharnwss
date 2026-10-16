@@ -16,6 +16,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.Tab
+import androidx.compose.ui.unit.Dp
+import com.vardiya.app.domain.ShiftPay
+import com.vardiya.app.ui.components.ShiftRowTrailing
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -46,6 +55,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.vardiya.app.domain.Holiday
 import com.vardiya.app.domain.MonthSummary
+import com.vardiya.app.domain.Reports
 import com.vardiya.app.domain.Shift
 import com.vardiya.app.domain.TurkishHolidays
 import com.vardiya.app.ui.components.DayMonthFormatter
@@ -59,32 +69,104 @@ import java.time.LocalDate
 
 private val WeekDays = listOf("Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz")
 
+private enum class CalendarTab(val label: String) { MONTH("Takvim"), HOURS("Çalışma saatleri"), REPORTS("Raporlar") }
+
 @Composable
 fun CalendarScreen(
     summary: MonthSummary,
+    reports: Reports,
     onPreviousMonth: () -> Unit,
     onNextMonth: () -> Unit,
     onToday: () -> Unit,
     onAddShift: (LocalDate) -> Unit,
     onEditShift: (Shift) -> Unit,
+    onDeleteShift: (Shift) -> Unit,
     contentPadding: PaddingValues,
     today: LocalDate = LocalDate.now(),
+    initialTab: Int = 0,
+) {
+    val shiftsByDate = remember(summary) { summary.shifts.groupBy { it.shift.localDate } }
+    var tab by rememberSaveable { mutableStateOf(CalendarTab.entries[initialTab]) }
+    var selectedDay by rememberSaveable { mutableStateOf<String?>(null) }
+
+    Column(Modifier.fillMaxSize().padding(top = contentPadding.calculateTopPadding())) {
+        PrimaryTabRow(selectedTabIndex = tab.ordinal) {
+            CalendarTab.entries.forEach { item ->
+                Tab(
+                    selected = tab == item,
+                    onClick = { tab = item },
+                    text = { Text(item.label) },
+                )
+            }
+        }
+        val bodyModifier = Modifier
+            .weight(1f)
+            .fillMaxWidth()
+        val bottom = contentPadding.calculateBottomPadding() + 16.dp
+        when (tab) {
+            CalendarTab.MONTH -> MonthTab(
+                summary = summary,
+                shiftsByDate = shiftsByDate,
+                onPreviousMonth = onPreviousMonth,
+                onNextMonth = onNextMonth,
+                onToday = onToday,
+                onSelectDay = { selectedDay = it.toString() },
+                today = today,
+                bottomPadding = bottom,
+                modifier = bodyModifier,
+            )
+            CalendarTab.HOURS -> HoursTab(
+                summary = summary,
+                shiftsByDate = shiftsByDate,
+                onPreviousMonth = onPreviousMonth,
+                onNextMonth = onNextMonth,
+                onToday = onToday,
+                onSelectDay = { selectedDay = it.toString() },
+                bottomPadding = bottom,
+                modifier = bodyModifier,
+            )
+            CalendarTab.REPORTS -> ReportsTab(
+                reports = reports,
+                today = today,
+                bottomPadding = bottom,
+                modifier = bodyModifier,
+            )
+        }
+    }
+
+    selectedDay?.let { iso ->
+        val date = LocalDate.parse(iso)
+        DaySheet(
+            date = date,
+            holiday = TurkishHolidays.on(date),
+            shifts = shiftsByDate[date].orEmpty().map { it.shift to it.pay },
+            onDismiss = { selectedDay = null },
+            onAdd = { selectedDay = null; onAddShift(date) },
+            onEdit = { selectedDay = null; onEditShift(it) },
+            onDelete = onDeleteShift,
+        )
+    }
+}
+
+@Composable
+private fun MonthTab(
+    summary: MonthSummary,
+    shiftsByDate: Map<LocalDate, List<ShiftPay>>,
+    onPreviousMonth: () -> Unit,
+    onNextMonth: () -> Unit,
+    onToday: () -> Unit,
+    onSelectDay: (LocalDate) -> Unit,
+    today: LocalDate,
+    bottomPadding: Dp,
+    modifier: Modifier = Modifier,
 ) {
     val month = summary.month
     val holidays = remember(month) { TurkishHolidays.inMonth(month).associateBy { it.date } }
-    val shiftsByDate = remember(summary) { summary.shifts.groupBy { it.shift.localDate } }
-    var selectedDay by rememberSaveable { mutableStateOf<String?>(null) }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = modifier
             .verticalScroll(rememberScrollState())
-            .padding(
-                start = 16.dp,
-                end = 16.dp,
-                top = contentPadding.calculateTopPadding() + 8.dp,
-                bottom = contentPadding.calculateBottomPadding() + 16.dp,
-            ),
+            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = bottomPadding),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         MonthSwitcher(month, onPreviousMonth, onNextMonth, onToday)
@@ -119,7 +201,7 @@ fun CalendarScreen(
                                     holiday = holidays[date],
                                     pay = shiftsByDate[date]?.sumOf { it.pay },
                                     isToday = date == today,
-                                    onClick = { selectedDay = date.toString() },
+                                    onClick = { onSelectDay(date) },
                                 )
                             }
                         }
@@ -149,17 +231,76 @@ fun CalendarScreen(
             }
         }
     }
+}
 
-    selectedDay?.let { iso ->
-        val date = LocalDate.parse(iso)
-        DaySheet(
-            date = date,
-            holiday = TurkishHolidays.on(date),
-            shifts = shiftsByDate[date].orEmpty().map { it.shift to it.pay },
-            onDismiss = { selectedDay = null },
-            onAdd = { selectedDay = null; onAddShift(date) },
-            onEdit = { selectedDay = null; onEditShift(it) },
-        )
+/** Every worked day of the month with its hours, shift times and pay. */
+@Composable
+private fun HoursTab(
+    summary: MonthSummary,
+    shiftsByDate: Map<LocalDate, List<ShiftPay>>,
+    onPreviousMonth: () -> Unit,
+    onNextMonth: () -> Unit,
+    onToday: () -> Unit,
+    onSelectDay: (LocalDate) -> Unit,
+    bottomPadding: Dp,
+    modifier: Modifier = Modifier,
+) {
+    val days = remember(shiftsByDate) { shiftsByDate.entries.sortedBy { it.key } }
+    LazyColumn(
+        modifier = modifier,
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = bottomPadding),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        item { MonthSwitcher(summary.month, onPreviousMonth, onNextMonth, onToday) }
+        item {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                shape = MaterialTheme.shapes.large,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics(mergeDescendants = true) {},
+            ) {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Column {
+                        Text("Bu ay toplam", style = MaterialTheme.typography.labelLarge)
+                        Text(formatDuration(summary.workedMinutes), style = MaterialTheme.typography.headlineSmall)
+                        Text("${days.size} gün çalışıldı", style = MaterialTheme.typography.bodyMedium)
+                    }
+                    Text(formatMoney(summary.totalPay), style = MaterialTheme.typography.titleLarge)
+                }
+            }
+        }
+        if (days.isEmpty()) {
+            item {
+                Text(
+                    "Bu ay henüz çalışılan gün yok.",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 32.dp),
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        items(days, key = { it.key.toString() }) { (date, pays) ->
+            val worked = pays.sumOf { it.shift.workedMinutes }
+            val breaks = pays.sumOf { it.shift.breakMinutes }
+            val times = pays.joinToString(", ") { "${formatClock(it.shift.startMinute)}–${formatClock(it.shift.endMinute)}" }
+            OutlinedCard(onClick = { onSelectDay(date) }, modifier = Modifier.fillMaxWidth()) {
+                ListItem(
+                    overlineContent = { Text(date.format(DayMonthFormatter)) },
+                    headlineContent = { Text(formatDuration(worked), fontWeight = FontWeight.SemiBold) },
+                    supportingContent = { Text(times + if (breaks > 0) " · mola ${formatDuration(breaks)}" else "") },
+                    trailingContent = { Text(formatMoney(pays.sumOf { it.pay }), style = MaterialTheme.typography.titleMedium) },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                )
+            }
+        }
     }
 }
 
@@ -269,6 +410,7 @@ private fun DaySheet(
     onDismiss: () -> Unit,
     onAdd: () -> Unit,
     onEdit: (Shift) -> Unit,
+    onDelete: (Shift) -> Unit,
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
@@ -303,7 +445,7 @@ private fun DaySheet(
                     ListItem(
                         headlineContent = { Text("${formatClock(shift.startMinute)} – ${formatClock(shift.endMinute)}") },
                         supportingContent = { Text(formatDuration(shift.workedMinutes) + if (shift.note.isNotBlank()) " · ${shift.note}" else "") },
-                        trailingContent = { Text(formatMoney(pay), style = MaterialTheme.typography.titleMedium) },
+                        trailingContent = { ShiftRowTrailing(shift, pay, onDelete) },
                         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                     )
                 }

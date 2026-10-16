@@ -40,7 +40,7 @@ class VardiyaViewModel(application: Application) : AndroidViewModel(application)
     /** Current time every second while a shift is running, null otherwise. */
     @OptIn(ExperimentalCoroutinesApi::class)
     private val clock = repository.activeShiftStart.flatMapLatest { start ->
-        if (start == null) flowOf(null) else flow {
+        if (start == null) flowOf<Long?>(null) else flow<Long?> {
             while (true) {
                 emit(System.currentTimeMillis())
                 delay(1_000)

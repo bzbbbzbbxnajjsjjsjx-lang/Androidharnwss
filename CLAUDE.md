@@ -34,7 +34,9 @@ read the GitHub Actions result before calling a change done.
 - `ui/VardiyaApp.kt` — scaffold, tab switching. `ui/Destination.kt` — tabs and the bottom bar.
 - `ui/screens/` — Summary (wavy ring, start/break/finish), Calendar (tabs: month grid, working
   hours, reports in `ReportsTab.kt`), Shifts, Settings, shift editor sheet.
-- `ui/components/` — `WavyRing` (Material's `CircularWavyProgressIndicator` scaled to hero size),
+- `ui/components/` — `WavyRing` (Material's `CircularWavyProgressIndicator`, set up exactly like
+  F-Droid's first-start indicator: 6dp round stroke and 24dp wavelength on a 128dp ring, scaled up
+  to the 300dp ring, defaults otherwise),
   `MonthSwitcher`, `Format.kt` (Turkish number/money/date formatting).
 - `ui/theme/Theme.kt` — teal brand scheme; dynamic color is off on purpose.
 

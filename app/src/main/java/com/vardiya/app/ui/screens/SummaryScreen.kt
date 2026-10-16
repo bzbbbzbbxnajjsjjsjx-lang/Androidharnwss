@@ -1,6 +1,5 @@
 package com.vardiya.app.ui.screens
 
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -48,7 +47,6 @@ import com.vardiya.app.ui.components.WavyRing
 import com.vardiya.app.ui.components.formatMoney
 import com.vardiya.app.ui.components.formatMonth
 import kotlinx.coroutines.delay
-import kotlin.math.max
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -109,13 +107,6 @@ fun SummaryScreen(
             }
         }
     }
-    // The wave grows in when a shift starts and flattens when it ends.
-    val waveAmplitude by animateFloatAsState(
-        targetValue = if (running) 1f else 0f,
-        animationSpec = MaterialTheme.motionScheme.slowEffectsSpec(),
-        label = "waveAmplitude",
-    )
-
     // A light tick every full minute.
     val minutesElapsed = (elapsedSeconds / 60).toInt()
     var lastMinute by remember { mutableIntStateOf(minutesElapsed) }
@@ -141,11 +132,8 @@ fun SummaryScreen(
         ) {
             Box(contentAlignment = Alignment.Center) {
                 WavyRing(
-                    // Early in a shift the true share is a dot; show at least one wavelength so
-                    // the flowing wave is visible from the first second.
-                    progress = { if (running) max(shiftProgress, MIN_VISIBLE_PROGRESS) else 0f },
-                    amplitude = { waveAmplitude },
-                    modifier = Modifier.size(270.dp),
+                    progress = { shiftProgress },
+                    size = 300.dp,
                 )
                 // One TalkBack stop that reads status, timer and earnings together.
                 Column(
@@ -265,9 +253,6 @@ private fun formatSeconds(seconds: Long): String =
         seconds % SECONDS_PER_HOUR / SECONDS_PER_MINUTE,
         seconds % SECONDS_PER_MINUTE,
     )
-
-/** About one 48dp wavelength of the 270dp ring. */
-private const val MIN_VISIBLE_PROGRESS = 0.06f
 
 /** Icon and text sized for a Medium button. */
 @Composable

@@ -4,7 +4,10 @@ Material 3 vardiya ve kazanç takip uygulaması.
 
 **Kurulum:** Aşağıdaki `Vardiya-*.apk` dosyasını telefona indir ve aç (bilinmeyen kaynaklardan yüklemeye izin vermen gerekebilir). Android 8.0 ve üzeri.
 
-### Yenilikler (1.7.0)
+### Yenilikler (1.7.1)
+- **Dalgalı halka F-Droid'deki gibi:** F-Droid'in kaynak kodundaki göstergenin oranları kullanılıyor (128 dp halkada 6 dp yuvarlak çizgi, 24 dp dalga boyu, gerisi Material'ın varsayılanları), halka 300 dp'ye büyütüldü. Halka artık gerçek ilerlemeyi gösteriyor; vardiyanın ilk saniyelerinde büyük bir dalga parçası görünmüyor, halka vardiya süresiyle birlikte doluyor.
+
+### 1.7.0
 - **Mola:** Vardiya sürerken Başlat/Bitir'in üstünde **Mola ver** tuşu var. Moladayken sayaç ve kazanç durur, "Molada · ücret durdu" yazar; **Moladan dön** ile devam edilir. Toplam mola ekranda görünür ve vardiyaya kaydedilir, ücrete dahil edilmez.
 - **Takvim'e yeni sekmeler:** *Çalışma saatleri* sekmesinde ayın her çalışılan günü, kaç saat çalışıldığı, saat aralıkları, mola ve kazanç; üstte ayın toplamı. *Raporlar* sekmesinde haftalık (Pazartesi–Pazar) ve aylık raporlar: çalışılan süre, vardiya ve gün sayısı, günlük ortalama, mola, fazla mesai, bayram saatleri ve kazanç.
 - **Vardiya silme:** Vardiyalar listesinde ve takvimdeki gün penceresinde her vardiyanın yanında silme tuşu; silmeden önce onay sorulur.

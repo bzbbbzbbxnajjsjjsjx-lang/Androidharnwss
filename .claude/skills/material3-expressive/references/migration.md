@@ -1,12 +1,17 @@
 # Upgrading Vardiya from material3 1.4.0-alpha14 to 1.5.0-beta01
 
-The app pins `material3 = "1.4.0-alpha14"` (May 2025). Everything in this skill documents
+**Done in app 1.6.0.** Kept as a record of what changed. The app used
+`material3 = "1.4.0-alpha14"` (May 2025). Everything in this skill documents
 1.5.0-beta01 (October 2026), where most Expressive APIs are stable. This page lists what changes
 for this codebase and what was removed or renamed in between. Changelog details:
 `changelog.md`.
 
 ## Build changes
 
+- **Toolchain (not in the release notes, found by building):** material3 1.5.0-beta01 and Compose
+  1.12 AARs require `compileSdk` 37 and Android Gradle Plugin 9.1 or newer. The app moved to AGP
+  9.4.1 and Gradle 9.8.1 and dropped the `org.jetbrains.kotlin.android` plugin (AGP 9 compiles
+  Kotlin itself); `targetSdk` stays 36.
 - `gradle/libs.versions.toml`: `material3 = "1.5.0-beta01"`.
 - material3 1.5.0-beta01 depends on Compose `1.12.0` (`foundation`, `ui`, `runtime`,
   `animation-core`) and `androidx.graphics:graphics-shapes:1.0.1` (as `api`). The current
@@ -19,7 +24,7 @@ for this codebase and what was removed or renamed in between. Changelog details:
 - Opt-ins: `ExperimentalMaterial3ExpressiveApi` is still needed for `LoadingIndicator`,
   `ContainedLoadingIndicator`, `MaterialShapes` and the `toShape()`/`toPath()` helpers. Keep the
   module-wide opt-in in `app/build.gradle.kts`.
-- Verify in CI: this environment cannot resolve Google Maven.
+- Verified locally (detekt, lint, unit tests, debug and release APKs) and in CI.
 
 ## Code in this app that the upgrade touches
 

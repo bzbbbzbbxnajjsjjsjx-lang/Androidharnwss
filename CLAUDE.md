@@ -14,8 +14,10 @@ library.
 ```
 
 CI (`.github/workflows/android.yml`) runs detekt, lint, unit tests and both APK builds on every
-push. Cloud sessions usually cannot reach Google's Maven repo, so Gradle cannot configure the
-project there: push and read the GitHub Actions result instead of claiming a local build passed.
+push. Cloud sessions can build locally if the Android SDK (platform 37) is installed and
+`ANDROID_HOME` points at it; Maven Central rate-limits the session proxy (HTTP 429), so pass
+`-I .claude/gradle/maven-central-mirror.gradle` to resolve it through Google's mirror. Still
+read the GitHub Actions result before calling a change done.
 
 ## Layout
 
@@ -52,8 +54,10 @@ project there: push and read the GitHub Actions result instead of claiming a loc
   Keep Calendar and Shifts off per-second state.
 - Accessibility: group related texts with `semantics(mergeDescendants = true)`, mark titles as
   headings, give icon-only buttons a `contentDescription`.
-- Material 3 is pinned to the `1.4.0-alpha` line for Expressive APIs; the opt-ins are set
-  globally in `app/build.gradle.kts`, don't add `@OptIn` per call site.
+- Build: AGP 9 (built-in Kotlin, no `kotlin-android` plugin), Gradle 9, compileSdk 37 (material3
+  1.5 and Compose 1.12 require it), targetSdk 36. Material 3 is `1.5.0-beta01`, ahead of the
+  Compose BOM; the app uses `MaterialExpressiveTheme`. The Expressive opt-ins are set globally in
+  `app/build.gradle.kts`, don't add `@OptIn` per call site.
 - Detekt config is in `config/detekt/detekt.yml`; `config/detekt/baseline.xml` holds findings
   that predate detekt. Fix new findings rather than adding them to the baseline.
 
@@ -68,5 +72,5 @@ down under its own version heading). Pushing a `v*` tag, or running the workflow
 
 `.claude/skills/` holds Compose UI, performance audit, accessibility and testing guidance, plus
 `material3-expressive`: the full Material 3 Expressive reference (every material3 1.5.0-beta01
-API with KDoc, design tokens, official samples, release notes, and the upgrade path from the
-pinned 1.4.0-alpha14). Load the matching skill before working in that area.
+API with KDoc, design tokens, official samples, release notes, and notes on the upgrade from
+1.4.0-alpha14). Load the matching skill before working in that area.

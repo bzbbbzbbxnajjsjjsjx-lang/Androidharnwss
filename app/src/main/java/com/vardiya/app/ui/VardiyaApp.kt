@@ -32,9 +32,9 @@ import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ShortNavigationBar
+import androidx.compose.material3.ShortNavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -120,11 +120,11 @@ private fun MainContent(viewModel: VardiyaViewModel) {
 
     Scaffold(
         bottomBar = {
-            // Full-width, tall (80dp) Material 3 navigation bar with always-visible labels.
-            NavigationBar {
+            // M3 Expressive short navigation bar: 64dp, pill indicator behind the icon.
+            ShortNavigationBar {
                 Destination.entries.forEach { item ->
                     val selected = destination == item
-                    NavigationBarItem(
+                    ShortNavigationBarItem(
                         selected = selected,
                         onClick = {
                             if (!selected) haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
@@ -132,7 +132,6 @@ private fun MainContent(viewModel: VardiyaViewModel) {
                         },
                         icon = { Icon(if (selected) item.selectedIcon else item.icon, contentDescription = null) },
                         label = { Text(item.label) },
-                        alwaysShowLabel = true,
                     )
                 }
             }

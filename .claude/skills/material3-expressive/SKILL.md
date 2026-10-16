@@ -1,6 +1,6 @@
 ---
 name: material3-expressive
-description: Complete Material 3 Expressive reference for Jetpack Compose (androidx material3 1.5.0-beta01) — every public API with KDoc, all design tokens, the official samples, theme/motion/shape/typography foundations, component guides, release notes since 1.4.0-alpha01 and the upgrade path from this app's pinned 1.4.0-alpha14. Use for any work on visual components, shapes, motion, typography, the Summary screen ring, or a material3 upgrade.
+description: Complete Material 3 Expressive reference for Jetpack Compose (androidx material3 1.5.0-beta01) — every public API with KDoc, all design tokens, the official samples, theme/motion/shape/typography foundations, component guides, release notes since 1.4.0-alpha01 and the notes on this app's upgrade from 1.4.0-alpha14. Use for any work on visual components, shapes, motion, typography, the Summary screen ring, or a material3 upgrade.
 ---
 
 # Material 3 Expressive
@@ -15,9 +15,9 @@ segmented lists, expressive menus).
 
 | | material3 | Expressive status |
 | --- | --- | --- |
-| **This app** | `1.4.0-alpha14` (May 2025) | everything experimental, several APIs since renamed |
+| 1.4.0-alpha14 | May 2025 | what this app used before 1.6.0; several APIs since renamed |
 | 1.4.0 stable | Sep 2025 | shipped without Expressive (only `ShortNavigationBar`, `WideNavigationRail`) |
-| **This reference** | `1.5.0-beta01` (Oct 2026) | stable, except `LoadingIndicator`, `ContainedLoadingIndicator`, `MaterialShapes` and some menu/slider/pull-to-refresh bits (`@ExperimentalMaterial3ExpressiveApi`) |
+| **This app and reference** | `1.5.0-beta01` (Oct 2026) | stable, except `LoadingIndicator`, `ContainedLoadingIndicator`, `MaterialShapes` and some menu/slider/pull-to-refresh bits (`@ExperimentalMaterial3ExpressiveApi`) |
 
 Before writing code against an API from this reference, check it exists in the version the app
 actually builds with (`gradle/libs.versions.toml`). `references/migration.md` lists what was
@@ -33,7 +33,7 @@ renamed or removed after alpha14 and how upgrading changes this app's code.
 | Exact spec values (dp, shapes, color roles, type roles, motion) | `references/tokens.md` (search `## <Component>Tokens`) |
 | Working example code (official androidx samples) | `references/samples/<File>Samples.kt` — KDoc `@sample …samples.Foo` points to `fun Foo` |
 | When/why an API changed | `references/changelog.md` |
-| Upgrading this app off alpha14 | `references/migration.md` |
+| What the alpha14 → 1.5 upgrade changed | `references/migration.md` |
 
 Search rather than read whole files: `api/` is ~1.5 MB, `tokens.md` ~130 KB.
 
@@ -75,9 +75,9 @@ grep -rln "@material3expressive" .claude/skills/material3-expressive/references/
   the wave, round caps, one wavelength of travel per second, a whole number of waves around the
   ring. `progress` and `amplitude` are lambdas read in the draw scope; keep them that way so
   per-frame changes don't recompose.
-- `SummaryScreen.kt` `ExpressiveButton` hand-animates the pressed corner with a spring
-  (`DampingRatioMediumBouncy`, `StiffnessMedium`); after an upgrade, replace it with
-  `Button(shapes = ButtonDefaults.shapes())` (see `references/migration.md`).
+- `SummaryScreen.kt` start/finish use `Button(shapes = ButtonDefaults.shapesFor(height))` at
+  `MediumContainerHeight`, with icon, spacing and text from the `…For(height)` helpers. The bottom
+  bar is `ShortNavigationBar`; the theme is `MaterialExpressiveTheme`.
 - Haptics pair with emphasized actions: `HapticFeedbackType.Confirm` on start, `LongPress` on
   finish, `ContextClick` for each minute tick.
 

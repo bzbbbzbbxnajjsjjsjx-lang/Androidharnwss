@@ -1,12 +1,7 @@
 package com.vardiya.app.ui.screens
 
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.animateIntAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,12 +15,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -40,10 +33,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vardiya.app.domain.EarningsCalculator
 import com.vardiya.app.domain.MonthSummary
@@ -149,8 +142,7 @@ fun SummaryScreen(
                     )
                     Text(
                         "%02d:%02d:%02d".format(elapsedSeconds / 3600, elapsedSeconds / 60 % 60, elapsedSeconds % 60),
-                        style = MaterialTheme.typography.displaySmall,
-                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.displaySmallEmphasized,
                     )
                     Text(
                         formatMoney(shiftEarned),
@@ -171,78 +163,61 @@ fun SummaryScreen(
                 )
                 Text(
                     formatMoney(summary.totalPay + partialPay),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.headlineMediumEmphasized,
                 )
             }
         }
 
+        // Medium (56dp) buttons: pill at rest, the corners squeeze while pressed.
+        val buttonHeight = ButtonDefaults.MediumContainerHeight
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            ExpressiveButton(
+            Button(
                 onClick = {
                     haptic.performHapticFeedback(HapticFeedbackType.Confirm)
                     onStartShift()
                 },
+                shapes = ButtonDefaults.shapesFor(buttonHeight),
                 enabled = !running,
+                contentPadding = ButtonDefaults.contentPaddingFor(buttonHeight, hasStartIcon = true),
                 modifier = Modifier
                     .weight(1f)
-                    .height(64.dp),
+                    .height(buttonHeight),
             ) {
-                Icon(Icons.Filled.PlayArrow, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("Başlat", style = MaterialTheme.typography.titleMedium)
+                ButtonLabel(Icons.Filled.PlayArrow, "Başlat")
             }
-            ExpressiveButton(
+            Button(
                 onClick = {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     onFinishShift()
                 },
+                shapes = ButtonDefaults.shapesFor(buttonHeight),
                 enabled = running,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.tertiary,
                     contentColor = MaterialTheme.colorScheme.onTertiary,
                 ),
+                contentPadding = ButtonDefaults.contentPaddingFor(buttonHeight, hasStartIcon = true),
                 modifier = Modifier
                     .weight(1f)
-                    .height(64.dp),
+                    .height(buttonHeight),
             ) {
-                Icon(Icons.Filled.Check, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("Bitir", style = MaterialTheme.typography.titleMedium)
+                ButtonLabel(Icons.Filled.Check, "Bitir")
             }
         }
         Spacer(Modifier.height(16.dp))
     }
 }
 
-/** Pill button whose corners morph to a squarer shape while pressed (M3 Expressive). */
+/** Icon and text sized for a Medium button. */
 @Composable
-private fun ExpressiveButton(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    colors: ButtonColors = ButtonDefaults.buttonColors(),
-    content: @Composable RowScope.() -> Unit,
-) {
-    val interaction = remember { MutableInteractionSource() }
-    val pressed by interaction.collectIsPressedAsState()
-    val corner by animateIntAsState(
-        targetValue = if (pressed) 18 else 50,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
-        label = "buttonCorner",
-    )
-    Button(
-        onClick = onClick,
-        modifier = modifier,
-        enabled = enabled,
-        shape = RoundedCornerShape(percent = corner),
-        interactionSource = interaction,
-        colors = colors,
-        content = content,
-    )
+private fun RowScope.ButtonLabel(icon: ImageVector, text: String) {
+    val height = ButtonDefaults.MediumContainerHeight
+    Icon(icon, contentDescription = null, modifier = Modifier.size(ButtonDefaults.iconSizeFor(height)))
+    Spacer(Modifier.width(ButtonDefaults.iconSpacingFor(height)))
+    Text(text, style = ButtonDefaults.textStyleFor(height))
 }
 
 /** 225.0 → "225", 1.5 → "1,5". */

@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.detekt)
@@ -8,14 +7,15 @@ plugins {
 
 android {
     namespace = "com.vardiya.app"
-    compileSdk = 36
+    // material3 1.5 and Compose 1.12 require compiling against API 37; AGP 9 compiles Kotlin itself.
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.vardiya.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 8
-        versionName = "1.5.2"
+        versionCode = 9
+        versionName = "1.6.0"
     }
 
     buildTypes {

@@ -1,0 +1,39 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>LambdaParameterEventTrailing:ShiftEditorSheet.kt:onClick: () -&gt; Unit</ID>
+    <ID>MagicNumber:CalendarScreen.kt:1000</ID>
+    <ID>MagicNumber:Format.kt:24</ID>
+    <ID>MagicNumber:Format.kt:60</ID>
+    <ID>MagicNumber:Models.kt:ShiftTemplate.EVENING$16</ID>
+    <ID>MagicNumber:Models.kt:ShiftTemplate.EVENING$60</ID>
+    <ID>MagicNumber:Models.kt:ShiftTemplate.LONG_DAY$20</ID>
+    <ID>MagicNumber:Models.kt:ShiftTemplate.LONG_DAY$60</ID>
+    <ID>MagicNumber:Models.kt:ShiftTemplate.LONG_DAY$8</ID>
+    <ID>MagicNumber:Models.kt:ShiftTemplate.MORNING$16</ID>
+    <ID>MagicNumber:Models.kt:ShiftTemplate.MORNING$60</ID>
+    <ID>MagicNumber:Models.kt:ShiftTemplate.MORNING$8</ID>
+    <ID>MagicNumber:Models.kt:ShiftTemplate.NIGHT$60</ID>
+    <ID>MagicNumber:Models.kt:ShiftTemplate.NIGHT$8</ID>
+    <ID>MagicNumber:TurkishHolidays.kt:TurkishHolidays$10</ID>
+    <ID>MagicNumber:TurkishHolidays.kt:TurkishHolidays$15</ID>
+    <ID>MagicNumber:TurkishHolidays.kt:TurkishHolidays$19</ID>
+    <ID>MagicNumber:TurkishHolidays.kt:TurkishHolidays$23</ID>
+    <ID>MagicNumber:TurkishHolidays.kt:TurkishHolidays$28</ID>
+    <ID>MagicNumber:TurkishHolidays.kt:TurkishHolidays$29</ID>
+    <ID>MagicNumber:TurkishHolidays.kt:TurkishHolidays$30</ID>
+    <ID>MagicNumber:TurkishHolidays.kt:TurkishHolidays$4</ID>
+    <ID>MagicNumber:TurkishHolidays.kt:TurkishHolidays$5</ID>
+    <ID>MagicNumber:TurkishHolidays.kt:TurkishHolidays$7</ID>
+    <ID>MagicNumber:TurkishHolidays.kt:TurkishHolidays$8</ID>
+    <ID>MatchingDeclarationName:ShiftEditorSheet.kt:EditorRequest</ID>
+    <ID>ModifierMissing:CalendarScreen.kt:@Composable fun CalendarScreen</ID>
+    <ID>ModifierMissing:SettingsScreen.kt:@Composable fun SettingsScreen</ID>
+    <ID>ModifierMissing:ShiftsScreen.kt:@Composable fun ShiftsScreen</ID>
+    <ID>ModifierMissing:SummaryScreen.kt:@Composable fun SummaryScreen</ID>
+    <ID>ModifierWithoutDefault:ShiftEditorSheet.kt:modifier: Modifier</ID>
+    <ID>ViewModelForwarding:VardiyaApp.kt:MainContent(viewModel)</ID>
+    <ID>ViewModelForwarding:VardiyaApp.kt:SummaryRoute( viewModel = viewModel, summary = summary, activeShiftStart = activeShiftStart, contentPadding = padding, )</ID>
+  </CurrentIssues>
+</SmellBaseline>

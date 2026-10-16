@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.detekt)
 }
 
 android {
@@ -32,6 +33,18 @@ android {
     buildFeatures {
         compose = true
     }
+    lint {
+        abortOnError = true
+        checkDependencies = false
+    }
+}
+
+detekt {
+    buildUponDefaultConfig = true
+    config.setFrom(rootProject.file("config/detekt/detekt.yml"))
+    baseline = rootProject.file("config/detekt/baseline.xml")
+    basePath = rootProject.layout.projectDirectory
+    source.setFrom("src/main/java", "src/test/java")
 }
 
 kotlin {
@@ -58,4 +71,6 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     testImplementation(libs.junit)
+
+    detektPlugins(libs.compose.rules.detekt)
 }
